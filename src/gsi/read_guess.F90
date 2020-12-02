@@ -75,6 +75,7 @@ subroutine read_guess(iyear,month,idd,mype)
 !   2017-10-10  Wu W    - add code for FV3 netcdf guess input 
 !   2019-09-18  martin  - added new fields to save guess tsen, q, geop_hgt for writing increment
 !   2019-09-23  martin  - add code for FV3 GFS netcdf guess input
+!   2020-11-19  Xu Lu & Xuguang Wang - add time label it_c for fgat/4denvar read in. POC: xuguang.wang@ou.edu
 !
 !   input argument list:
 !     mype     - mpi task id
@@ -128,6 +129,8 @@ subroutine read_guess(iyear,month,idd,mype)
   logical :: ice
   integer(i_kind) i,j,k,it,iret_bias,ier,istatus
   integer(i_kind) iderivative
+  logical :: file_exists
+  integer(i_kind) :: it_c
   type(read_wrf_nmm_guess_class) :: nmm_binary_guess
   type(read_wrf_mass_guess_class) :: nmm_mass_guess
 
@@ -164,8 +167,28 @@ subroutine read_guess(iyear,month,idd,mype)
         else if (nems_nmmb_regional) then
            call nmm_binary_guess%read_nems_nmmb_guess(mype)
         else if (fv3_regional      ) then
-           call bg_fv3regfilenameg%init
-           call  read_fv3_netcdf_guess(bg_fv3regfilenameg)
+           it_c=0
+           do it=1,7 !Xu default only -+3 hours for FGAT
+              if(it.eq.4) then
+                 write(filename,"(A11)") 'fv3_sfcdata'
+                 INQUIRE(FILE=filename, EXIST=file_exists)
+                 if(.not.file_exists) then
+                    if(mype.eq.0) write(6,*)' file ',trim(filename),' not exists!'
+                    cycle
+                 endif
+              else
+                 write(filename,"(A12,I2.2)") 'fv3_sfcdata_',(it+2)
+                 INQUIRE(FILE=filename, EXIST=file_exists)
+                 if(.not.file_exists) then
+                    if (mype.eq.0) write(6,*)' file ',trim(filename),' not exists for FGAT!'
+                    cycle
+                 endif
+              endif
+              it_c=it_c+1
+              if (mype.eq.0) print *,filename,"file read in for first guess",nfldsig
+              call bg_fv3regfilenameg%init(it)
+              call read_fv3_netcdf_guess(bg_fv3regfilenameg,it_c)
+           end do !Xu
         else if (cmaq_regional) then
            call read_cmaq_guess(mype)
         end if

@@ -42,7 +42,9 @@ subroutine write_all(increment)
   use mpeu_util, only: die
 
   use control_vectors, only: control_vector
-  
+
+  use gsi_4dvar, only: lwrite4danl
+
   implicit none
 
 ! !INPUT PARAMETERS:
@@ -96,6 +98,7 @@ subroutine write_all(increment)
 !   2013-10-19  todling - metguess holds ges fields now
 !   2014-10-05  todling - background biases now held in bundle
 !   2017-10-10  Wu W    - add FV3 option for regional output
+!   2020-11-19  Xu Lu & Xuguang Wang - add option to write 4denvar analyses at all times. POC: xuguang.wang@ou.edu
 !
 ! !REMARKS:
 !
@@ -112,6 +115,8 @@ subroutine write_all(increment)
   integer(i_kind) mype_atm,mype_bias,mype_sfc,iret_bias,ier
   real(r_kind),dimension(:,:),pointer::ges_z=>NULL()
   type(regional_io_class) :: io 
+  integer(i_kind) :: it_c,it
+  logical :: file_exists
 
 #ifndef HAVE_ESMF
 !********************************************************************
@@ -120,7 +125,26 @@ subroutine write_all(increment)
 ! Regional output
   if (regional) then
      if (fv3_regional) then
-        call wrfv3_netcdf(bg_fv3regfilenameg)
+        it_c=0
+        do it=1,7 !OU default only -+3 hours for FGAT
+           if (it.eq.4) then
+              write(filename,"(A11)") 'fv3_sfcdata'
+              INQUIRE(FILE=filename, EXIST=file_exists)
+              if(.not.file_exists) then
+                 cycle
+              endif
+           else
+              write(filename,"(A12,I2.2)") 'fv3_sfcdata_',(it+2)
+              INQUIRE(FILE=filename, EXIST=file_exists)
+              if(.not.file_exists) then
+                 cycle
+              endif
+              if (.not.lwrite4danl) cycle
+           endif
+           it_c=it_c+1
+           call bg_fv3regfilenameg%init(it) !OU default 4 for +- 3 hours FGAT
+           call wrfv3_netcdf(bg_fv3regfilenameg)
+        end do
      else
         call io%write_regional_analysis(mype)
      endif
