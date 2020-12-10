@@ -12,7 +12,7 @@ module gsi_rfv3io_mod
 !   2017-10-10  wu      - setup A grid and interpolation coeff in generate_anl_grid
 !   2018-02-22  wu      - add subroutines for read/write fv3_ncdf
 !   2019        ting    - modifications for use for ensemble IO and cold start files 
-!   2020-11-19 Xu Lu & Xuguang Wang - add time label it for fgat/4denvar. POC: xuguang.wang@ou.edu
+!   2020-11-19  Lu & Wang - add time label it for fgat. POC: xuguang.wang@ou.edu
 ! subroutines included:
 !   sub gsi_rfv3io_get_grid_specs
 !   sub read_fv3_files 
@@ -107,73 +107,56 @@ contains
   class(type_fv3regfilenameg),intent(inout):: this
   character(*),optional :: grid_spec_input,ak_bk_input,dynvars_input, &
                       tracers_input,sfcdata_input,couplerres_input
-  integer,intent(in) :: it ! OU default +-3 hours for FGAT
+  integer,intent(in) :: it
   character(255):: filename
   if(present(grid_spec_input))then
-
     this%grid_spec=grid_spec_input
-  else
-   if (it.eq.4) then
+  else if (it.eq.6) then 
     this%grid_spec='fv3_grid_spec'
-   else
-    write(filename,"(A14,I2.2)") 'fv3_grid_spec_',(it+2)
+  else
+    write(filename,"(A14,I2.2)") 'fv3_grid_spec_',(it)
     this%grid_spec=trim(filename)
-   end if
   endif
   if(present(ak_bk_input))then
     this%ak_bk=ak_bk_input
-  else
-   if (it.eq.4) then
+  else if (it.eq.6) then
     this%ak_bk='fv3_ak_bk'
-   else
-    write(filename,"(A10,I2.2)") 'fv3_ak_bk_',(it+2)
+  else
+    write(filename,"(A10,I2.2)") 'fv3_ak_bk_',(it)
     this%ak_bk=trim(filename)
-   endif
   endif
   if(present(dynvars_input))then
-
     this%dynvars=dynvars_input
-  else
-   if (it.eq.4) then
+  else if (it.eq.6) then
     this%dynvars='fv3_dynvars'
-   else
-    write(filename,"(A12,I2.2)") 'fv3_dynvars_',(it+2)
+  else
+    write(filename,"(A12,I2.2)") 'fv3_dynvars_',(it)
     this%dynvars=trim(filename)
-   endif
   endif
   if(present(tracers_input))then
-
     this%tracers=tracers_input
-  else
-   if (it.eq.4) then
+  else if (it.eq.6) then
     this%tracers='fv3_tracer'
-   else
-    write(filename,"(A11,I2.2)") 'fv3_tracer_',(it+2)
+  else
+    write(filename,"(A11,I2.2)") 'fv3_tracer_',(it)
     this%tracers=trim(filename)
-   endif
   endif
   if(present(sfcdata_input))then
-
     this%sfcdata=sfcdata_input
-  else
-   if (it.eq.4) then
+  else if (it.eq.6) then
     this%sfcdata='fv3_sfcdata'
-   else
-    write(filename,"(A12,I2.2)") 'fv3_sfcdata_',(it+2)
+  else
+    write(filename,"(A12,I2.2)") 'fv3_sfcdata_',(it)
     this%sfcdata=trim(filename)
-   endif
   endif
 
   if(present(couplerres_input))then
-
     this%couplerres=couplerres_input
-  else
-   if (it.eq.4) then
+  else if (it.eq.6) then
     this%couplerres='coupler.res'
-   else
-    write(filename,"(A12,I2.2)") 'coupler.res_',(it+2)
+  else
+    write(filename,"(A12,I2.2)") 'coupler.res_',(it)
     this%couplerres=trim(filename)
-   endif
   endif
 
   end subroutine fv3regfilename_init
@@ -536,6 +519,8 @@ subroutine read_fv3_files(mype)
     integer(i_kind) nminanl,nmings,nming2,ndiff,isecond
     integer(i_kind),dimension(4):: idateg
     integer(i_kind),dimension(5):: idate5
+    character*1 :: datein(4),dateout(4)
+    integer(i_kind) datecc
     real(r_kind) hourg,temp,t4dv
     real(r_kind),dimension(202,2):: time_ges
 
@@ -563,20 +548,25 @@ subroutine read_fv3_files(mype)
        iwan=0
 !WWWWWW setup for one first guess file for now
        do i=0,99 !place holder for FGAT
-!OU       i=3
           if (i.eq.6) then
-           write(filenames,"(A11)") 'fv3_dynvars'
+            write(filenames,"(A11)") 'fv3_dynvars'
           else
-           write(filenames,"(A12,I2.2)") 'fv3_dynvars_',i
+            write(filenames,"(A12,I2.2)") 'fv3_dynvars_',i
           endif
           INQUIRE(FILE=filenames, EXIST=fexist)
           if(.not.fexist) cycle
 
 !wwww read in from the external file directly, no internal files sigfxx for FV3
-          idate5(1)=  regional_time(1)
-          idate5(2)=  regional_time(2)
-          idate5(3)=  regional_time(3)
-          idate5(4)=  regional_time(4) + i - 6
+          datecc=regional_time(1)/100
+          datein(1)=char(regional_time(1)-datecc*100)
+          datein(2)=char(regional_time(2))
+          datein(3)=char(regional_time(3))
+          datein(4)=char(regional_time(4))
+          call w3fs15(datein,(i-6),dateout)
+          idate5(1)=ichar(dateout(1))+datecc*100
+          idate5(2)=ichar(dateout(2))
+          idate5(3)=ichar(dateout(3))
+          idate5(4)=ichar(dateout(4))
           idate5(5)=  regional_time(5)
           isecond  =  regional_time(6)
           hourg    =  zero ! forcast hour
@@ -624,18 +614,23 @@ subroutine read_fv3_files(mype)
 !    Check for consistency of times from surface guess files.
        iwan=0
        do i=0,99
-!         write(filename,200)i
-! 200     format('sfcf',i2.2)
-!         inquire(file=filename,exist=fexist)
-          if(i.eq.6) then
-             write(filenames,"(A11)") 'fv3_sfcdata'
+          if (i.eq.6) then
+           write(filenames,"(A11)") 'fv3_sfcdata'
           else
-             write(filenames,"(A12,I2.2)") 'fv3_sfcdata_',i
+           write(filenames,"(A12,I2.2)") 'fv3_sfcdata_',i
           endif
           INQUIRE(FILE=filenames, EXIST=fexist)
           if(fexist)then
-             idateg(4)=iadate(1); idateg(2)=iadate(2)
-             idateg(3)=iadate(3); idateg(1)=iadate(4) + i - 6
+             datecc=iadate(1)/100
+             datein(1)=char(iadate(1)-datecc*100)
+             datein(2)=char(iadate(2))
+             datein(3)=char(iadate(3))
+             datein(4)=char(iadate(4))
+             call w3fs15(datein,(i-6),dateout)
+             idateg(1)=ichar(dateout(1))+datecc*100
+             idateg(2)=ichar(dateout(2))
+             idateg(3)=ichar(dateout(3))
+             idateg(4)=ichar(dateout(4))
              hourg = zero
              idate5(1)=idateg(4); idate5(2)=idateg(2)
              idate5(3)=idateg(3); idate5(4)=idateg(1); idate5(5)=0
@@ -848,7 +843,7 @@ subroutine read_fv3_netcdf_guess(fv3filenamegin,it)
 
     if( fv3sar_bg_opt == 0) then 
 !      call gsi_fv3ncdf_read(dynvars,'DELP','delp',ges_prsi,mype_p)
-       call gsi_fv3ncdf_read(dynvars,'DELP','delp',ges_prsi(1,1,1,it),mype_p)
+       call gsi_fv3ncdf_read(dynvars,'DELP','delp',ges_prsi(:,:,:,it),mype_p)
        ges_prsi(:,:,nsig+1,it)=eta1_ll(nsig+1)
        do i=nsig,1,-1
           ges_prsi(:,:,i,it)=ges_prsi(:,:,i,it)*0.001_r_kind+ges_prsi(:,:,i+1,it)
@@ -856,8 +851,8 @@ subroutine read_fv3_netcdf_guess(fv3filenamegin,it)
        ges_ps(:,:)=ges_prsi(:,:,1,it)
     else  
        call  gsi_fv3ncdf2d_read_v1(dynvars,'ps','PS',ges_ps,mype_p)
-       ges_prsi(:,:,nsig+1,it)=eta1_ll(nsig+1)
        ges_ps=ges_ps*0.001_r_kind
+       ges_prsi(:,:,nsig+1,it)=eta1_ll(nsig+1)
        do k=1,nsig
           ges_prsi(:,:,k,it)=eta1_ll(k)+eta2_ll(k)*ges_ps  
        enddo
