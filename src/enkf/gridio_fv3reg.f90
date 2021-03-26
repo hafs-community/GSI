@@ -245,7 +245,7 @@ contains
            tvworkvar3d=workvar3d
         else! tsen_id >0
            workvar3d=tsenworkvar3d
-           tvworkvar3d=workvar3d*(one+fv*qworkvar3d(i,j,k))
+           tvworkvar3d=workvar3d*(one+fv*qworkvar3d)
         endif
            tmp_ind=max(tv_ind,tsen_ind) !then can't be both >0 
            do k=1,nlevs
