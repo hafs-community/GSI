@@ -435,7 +435,6 @@ subroutine read_prepbufr(nread,ndata,nodata,infile,obstype,lunout,twindin,sis,&
 
   real(r_double),dimension(3,1500):: fcstdat
   logical print_verbose
-  
   print_verbose=.false.
   if(verbose) print_verbose=.true.
 ! File type

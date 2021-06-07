@@ -327,7 +327,7 @@ subroutine generate_regular_grids(nx,ny,grid_lon,grid_lont,grid_lat,grid_latt,p_
 
   region_lat_out=region_lat_out*deg2rad
   region_lon_out=region_lon_out*deg2rad
-  if (present(coeffx_out)) then ! if coeffx_out is present, this is for analysis grid 
+  if (present(coeffx_out)) then !clttothink if coeffx_out is present, this is for analysis grid 
   allocate(glat_an(nlonout,nlatout),glon_an(nlonout,nlatout))
 
   do j=1,nlatout
@@ -467,7 +467,6 @@ subroutine generate_regular_grids(nx,ny,grid_lon,grid_lont,grid_lat,grid_latt,p_
       fv3jy(i,j)=int(gya)
       fv3jy(i,j)=min(max(1,fv3jy(i,j)),ny)
       fv3jyp(i,j)=min(ny,fv3jy(i,j)+1)
-
       if(bilinear)then
          fv3dy(i,j)=max(zero,min(one,gya-fv3jy(i,j)))
          fv3dy1(i,j)=one-fv3dy(i,j)
@@ -560,7 +559,7 @@ subroutine generate_regular_grids(nx,ny,grid_lon,grid_lont,grid_lat,grid_latt,p_
         a3jy(j,i)=min(max(1,a3jy(j,i)),nyout)
         a3dy(j,i)=max(zero,min(one,gya-a3jy(j,i)))
         a3dy1(j,i)=one-a3dy(j,i)
-        a3jyp(j,i)=min(ny,a3jy(j,i)+1)
+        a3jyp(j,i)=min(nyout,a3jy(j,i)+1)
      end do
   end do
 
@@ -1050,7 +1049,7 @@ subroutine definecoef_regular_grids(nx,ny,nxa_inout,nya_inout,grid_lon,grid_lont
         a3jy(j,i)=min(max(1,a3jy(j,i)),nyout)
         a3dy(j,i)=max(zero,min(one,gya-a3jy(j,i)))
         a3dy1(j,i)=one-a3dy(j,i)
-        a3jyp(j,i)=min(ny,a3jy(j,i)+1)
+        a3jyp(j,i)=min(nyout,a3jy(j,i)+1)
      end do
   end do
 
@@ -1368,7 +1367,6 @@ subroutine fv3_ll_to_h_regular_grids(a,b,nxa,nya,nxb,nyb,rev_flg,p_fv3sar2grid)
   a3ixp =>p_fv3sar2grid%a3ixp
   a3jy =>p_fv3sar2grid%a3jy
   a3jyp=>p_fv3sar2grid%a3jyp
-
   if(rev_flg)then
 !!!!!!!!!! output in reverse E-W, N-S and reversed i,j !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      nybp=nyb+1

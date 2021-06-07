@@ -720,6 +720,8 @@ contains
     implicit none
 
     integer(i_kind) i
+    real(r_kind):: rtemp1
+    real(r_kind),external:: getbmiss
 
     ntilt_radarfiles=1
     vr_dealisingopt=.false.
@@ -942,6 +944,9 @@ contains
     uv_doe_b_237 = 0.0_r_kind      
     uv_doe_a_213 = 1.0_r_kind
     uv_doe_b_213 = 0.0_r_kind
+    rtemp1=getbmiss()
+    write(6,*)'thinkdeb250 orginal bufr bmiss is ',rtemp1
+    call flush(6)
     
     return
   end subroutine init_obsmod_dflts

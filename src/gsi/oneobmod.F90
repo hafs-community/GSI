@@ -78,6 +78,7 @@ module oneobmod
   integer(i_kind) obchan
 
   logical :: oneobmade
+  real(r_kind):: bufr_miss
 
 contains
 
@@ -104,6 +105,7 @@ contains
 !$$$
     use constants, only: zero, one, r1000
     implicit none
+    real(r_kind),external:: getbmiss
 
     oneobtest=.false.
     maginnov=one
@@ -127,6 +129,7 @@ contains
     lsingleradar=.false.
     learthrel_rw=.false.
     singleradar='KOUN'
+    bufr_miss=getbmiss()
     return
   end subroutine init_oneobmod
 
@@ -160,7 +163,7 @@ contains
 !$$$
     use constants, only: zero, one, five, one_tenth, r100, r0_01
     use gsi_io, only: lendian_in
-    use obsmod, only: offtime_data,iadate,bmiss
+    use obsmod, only: offtime_data,iadate
     implicit none
 
     real(r_kind),parameter:: r20=20.0_r_kind
@@ -212,11 +215,11 @@ contains
     zob=zero
     uob=five
     vob=five
-    owave=bmiss
-    maxtmint=bmiss
-    cldceilh=bmiss
-    cld2seq=bmiss
-    cldseq=bmiss
+    owave=bufr_miss
+    maxtmint=bufr_miss
+    cldceilh=bufr_miss
+    cld2seq=bufr_miss
+    cldseq=bufr_miss
     pqm=one
     qqm=one
     tqm=one
@@ -294,10 +297,10 @@ contains
        hdr(3)=yob(n)
        hdr(4)=dhr(n)
        hdr(5)=r100+typ(n)
-       obs=bmiss
-       qms=bmiss
-       err=bmiss
-       pcd=bmiss
+       obs=bufr_miss
+       qms=bufr_miss
+       err=bufr_miss
+       pcd=bufr_miss
        do k=1,nlev
           obs(1,k)=pob(k,n)
           obs(2,k)=qob(k,n)
@@ -335,10 +338,10 @@ contains
        hdr(3)=yob(n)
        hdr(4)=dhr(n)
        hdr(5)=200_r_kind+typ(n)
-       obs=bmiss
-       qms=bmiss
-       err=bmiss
-       pcd=bmiss
+       obs=bufr_miss
+       qms=bufr_miss
+       err=bufr_miss
+       pcd=bufr_miss
        do k=1,nlev
           obs(1,k)=pob(k,n)
           obs(5,k)=uob(k,n)
