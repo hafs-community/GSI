@@ -421,7 +421,7 @@ subroutine writegriddata(nanal1,nanal2,vars3d,vars2d,n3d,n2d,levels,ndim,vargrid
       real(r_single), dimension(:,:), allocatable ::pswork
     real(r_single), dimension(:,:,:), allocatable ::workvar3d,workinc3d,workinc3d2,uworkvar3d,&
                         vworkvar3d,tvworkvar3d,tsenworkvar3d,&
-                        workprsi,qworkvar3d,qbgworkvar3d
+                        workprsi,qworkvar3d,qsvworkvar3d,qbgworkvar3d
 
     !----------------------------------------------------------------------
     ! Define variables required by for extracting netcdf variable
@@ -470,6 +470,7 @@ subroutine writegriddata(nanal1,nanal2,vars3d,vars2d,n3d,n2d,levels,ndim,vargrid
     allocate(workinc3d(nx_res,ny_res,nlevs),workinc3d2(nx_res,ny_res,nlevsp1))
     allocate(workvar3d(nx_res,ny_res,nlevs))
     allocate(qworkvar3d(nx_res,ny_res,nlevs))
+    allocate(qsvworkvar3d(nx_res,ny_res,nlevs))
     allocate(qbgworkvar3d(nx_res,ny_res,nlevs))
     allocate(tvworkvar3d(nx_res,ny_res,nlevs))
 
@@ -556,7 +557,7 @@ subroutine writegriddata(nanal1,nanal2,vars3d,vars2d,n3d,n2d,levels,ndim,vargrid
        do k=1,nlevs
           if (nproc .eq. 0)                                               &
              write(6,*) 'WRITEregional : delp ',                           &
-                 & k, minval(qworkvar3d(:,:,k)), maxval(workvar3d(:,:,k))
+                 & k, minval(workvar3d(:,:,k)), maxval(workvar3d(:,:,k))
        enddo
     end if
 
@@ -574,6 +575,8 @@ subroutine writegriddata(nanal1,nanal2,vars3d,vars2d,n3d,n2d,levels,ndim,vargrid
          enddo
          enddo
        qworkvar3d=qbgworkvar3d+workinc3d   
+       ! save the original qworkvar3d before writing
+       qsvworkvar3d=qworkvar3d
      
        call write_fv3_restart_data3d(varstrname,fv3filename,file_id,qworkvar3d)
        do k=1,nlevs
@@ -581,9 +584,11 @@ subroutine writegriddata(nanal1,nanal2,vars3d,vars2d,n3d,n2d,levels,ndim,vargrid
              write(6,*) 'WRITEregional : sphum ',                           &
                  & k, minval(qworkvar3d(:,:,k)), maxval(qworkvar3d(:,:,k))
        enddo
+       ! during write_fv3_restart_data3d, qworkvar3d got all its dimensions in
+       ! revered order. So, restore the original qworkvar3d after writing, so
+       ! that it can be used below for the tsen calculation if needed.
+       qworkvar3d=qsvworkvar3d
     end if
-
-
 
     if (tv_ind > 0.or.tsen_ind>0 ) then
          
