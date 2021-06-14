@@ -548,16 +548,17 @@ contains
        enddo
        qworkvar3d=qbgworkvar3d+workinc3d
 
-       call write_fv3_restart_data3d(varstrname,fv3filename,file_id,qworkvar3d)
+       ! In write_fv3_restart_data3d, the input workvar3d will get all its
+       ! dimensions in revered order. So, use workvar3d for writing and leave
+       ! qworkvar3d unchanged so that it can be used below for the tsen
+       ! calculation if needed.
+       workvar3d=qworkvar3d
+       call write_fv3_restart_data3d(varstrname,fv3filename,file_id,workvar3d)
        do k=1,nlevs
           if (nproc .eq. 0)                                                 &
              write(6,*) 'WRITEregional : sphum ',                           &
-                 & k, minval(qworkvar3d(:,:,k)), maxval(qworkvar3d(:,:,k))
+                 & k, minval(workvar3d(:,:,k)), maxval(workvar3d(:,:,k))
        enddo
-       ! During write_fv3_restart_data3d, qworkvar3d got all its dimensions in
-       ! revered order. So, re-calculate qworkvar3d after being written, so
-       ! that it can be used below for the tsen calculation if needed.
-       qworkvar3d=qbgworkvar3d+workinc3d
     end if
 
     if (tv_ind>0 .or. tsen_ind>0 ) then
