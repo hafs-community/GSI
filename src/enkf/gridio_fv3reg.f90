@@ -400,7 +400,7 @@ contains
     real(r_single), dimension(:,:), allocatable ::pswork
     real(r_single), dimension(:,:,:), allocatable ::workvar3d,workinc3d,workinc3d2,uworkvar3d,&
                         vworkvar3d,tvworkvar3d,tsenworkvar3d,&
-                        workprsi,qworkvar3d,qsvworkvar3d,qbgworkvar3d
+                        workprsi,qworkvar3d,qbgworkvar3d
 
     !----------------------------------------------------------------------
     ! Define variables required by for extracting netcdf variable
@@ -447,7 +447,6 @@ contains
     allocate(workinc3d(nx_res,ny_res,nlevs),workinc3d2(nx_res,ny_res,nlevsp1))
     allocate(workvar3d(nx_res,ny_res,nlevs))
     allocate(qworkvar3d(nx_res,ny_res,nlevs))
-    allocate(qsvworkvar3d(nx_res,ny_res,nlevs))
     allocate(qbgworkvar3d(nx_res,ny_res,nlevs))
     allocate(tvworkvar3d(nx_res,ny_res,nlevs))
 
@@ -548,8 +547,6 @@ contains
        enddo
        enddo
        qworkvar3d=qbgworkvar3d+workinc3d
-       ! save the original qworkvar3d before writing
-       qsvworkvar3d=qworkvar3d
 
        call write_fv3_restart_data3d(varstrname,fv3filename,file_id,qworkvar3d)
        do k=1,nlevs
@@ -557,10 +554,10 @@ contains
              write(6,*) 'WRITEregional : sphum ',                           &
                  & k, minval(qworkvar3d(:,:,k)), maxval(qworkvar3d(:,:,k))
        enddo
-       ! during write_fv3_restart_data3d, qworkvar3d got all its dimensions in
-       ! revered order. So, restore the original qworkvar3d after writing, so
+       ! During write_fv3_restart_data3d, qworkvar3d got all its dimensions in
+       ! revered order. So, re-calculate qworkvar3d after being written, so
        ! that it can be used below for the tsen calculation if needed.
-       qworkvar3d=qsvworkvar3d
+       qworkvar3d=qbgworkvar3d+workinc3d
     end if
 
     if (tv_ind>0 .or. tsen_ind>0 ) then
@@ -680,7 +677,6 @@ contains
     if(allocated(pswork))       deallocate(pswork)
     if(allocated(tvworkvar3d))  deallocate(tvworkvar3d)
     if(allocated(qworkvar3d))   deallocate(qworkvar3d)
-    if(allocated(qsvworkvar3d)) deallocate(qsvworkvar3d)
     if(allocated(qbgworkvar3d)) deallocate(qbgworkvar3d)
 
     end do backgroundloop ! loop over backgrounds to read in
