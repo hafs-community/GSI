@@ -628,9 +628,37 @@ subroutine read_satwnd(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,sis
            if ( hdrdat_test(1) > 100000000.0_r_kind .and. hdrdat_test(2) > 100000000.0_r_kind ) then
               call ufbint(lunin,hdrdat,13,1,iret,hdrtr_v2) 
               call ufbint(lunin,obsdat,4,1,iret,obstr_v2)
+          ! ljl start
+                if( ntb<2 .and.               (     &
+                   trim(subset) == 'NC005010' .or. &
+                   trim(subset) == 'NC005011' .or. &
+                   trim(subset) == 'NC005012' .or. &
+                   trim(subset) == 'NC005030' .or. &
+                   trim(subset) == 'NC005039' .or. &
+                   trim(subset) == 'NC005032' .or. &
+                   trim(subset) == 'NC005034' .or. &
+                   trim(subset) == 'NC005031')     &
+                  )  then
+                  write(6,*) 'v2:satwndfile=',trim(infile)
+                endif
+             ! ljl end
            else
               call ufbint(lunin,hdrdat,13,1,iret,hdrtr_v1) 
               call ufbint(lunin,obsdat,4,1,iret,obstr_v1)
+            ! ljl start
+                if( ntb<2 .and.               (     &
+                   trim(subset) == 'NC005010' .or. &
+                   trim(subset) == 'NC005011' .or. &
+                   trim(subset) == 'NC005012' .or. &
+                   trim(subset) == 'NC005030' .or. &
+                   trim(subset) == 'NC005039' .or. &
+                   trim(subset) == 'NC005032' .or. &
+                   trim(subset) == 'NC005034' .or. &
+                   trim(subset) == 'NC005031')     &
+                  )  then
+                  write(6,*) 'v1:satwndfile=',trim(infile)
+                endif
+             ! ljl end
            endif
 
            ppb=obsdat(2)
@@ -1047,6 +1075,7 @@ subroutine read_satwnd(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,sis
 
                  call ufbint(lunin,rep_array,1,1,iret, '{AMVIVR}')
                  irep_array = int(rep_array)
+                 if( irep_array < 1 ) irep_array=2 !SSEC data don't have this info      
                  allocate( amvivr(2,irep_array))
                  call ufbrep(lunin,amvivr,2,irep_array,iret, 'TCOV CVWD')
                  pct1 = amvivr(2,1)     ! use of pct1 (a new variable in the BUFR) is introduced by Nebuda/Genkova
@@ -1146,21 +1175,21 @@ subroutine read_satwnd(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,sis
                  end if
                  if (experr_norm > 0.9_r_kind) qm=15 ! reject data with EE/SPD>0.9
 
-                 if(wrf_nmm_regional) then
-                    ! type 251 has been determine not suitable to be subjected to pct1 range check
-                    if(itype==240 .or. itype==245 .or. itype==246) then
-                       if (pct1 < 0.04_r_kind) qm=15
-                       if (pct1 > 0.50_r_kind) qm=15
-                    elseif (itype==251) then
-                       if (pct1 > 0.50_r_kind) qm=15
-                    endif
-                 else
-                    if(itype==240 .or. itype==245 .or. itype==246 .or. itype==251) then 
-                    ! types 245 and 246 have been used to determine the acceptable pct1 range, but that pct1 range is applied to all GOES-R winds
-           	       if (pct1 < 0.04_r_kind) qm=15  
-                       if (pct1 > 0.50_r_kind) qm=15
-                    endif
-                 endif
+!                 if(wrf_nmm_regional) then
+!                    ! type 251 has been determine not suitable to be subjected to pct1 range check
+!                    if(itype==240 .or. itype==245 .or. itype==246) then
+!                       if (pct1 < 0.04_r_kind) qm=15
+!                       if (pct1 > 0.50_r_kind) qm=15
+!                    elseif (itype==251) then
+!                       if (pct1 > 0.50_r_kind) qm=15
+!                    endif
+!                 else
+!                    if(itype==240 .or. itype==245 .or. itype==246 .or. itype==251) then 
+!                    ! types 245 and 246 have been used to determine the acceptable pct1 range, but that pct1 range is applied to all GOES-R winds
+!           	       if (pct1 < 0.04_r_kind) qm=15  
+!                       if (pct1 > 0.50_r_kind) qm=15
+!                    endif
+!                 endif
 
 ! GOES-16 additional QC addopting ECMWF's approach(Katie Lean,14IWW)-start
                  if (EC_AMV_QC) then 
