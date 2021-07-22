@@ -351,7 +351,6 @@ subroutine setupt(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
 !*********************************************************************************
 ! Read and reformat observations in work arrays.
   read(lunin)data,luse,ioid
-  write(6,*)'thinkd249luse is ',luse
 
 !  call GSD terrain match for surface temperature observation
   if(l_gsd_terrain_match_surftobs) then
@@ -814,7 +813,6 @@ subroutine setupt(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
 
 ! If requested, setup for single obs test.
      if (oneobtest) then
-        write(6,*)'tges is ',tges
         ddiff = maginnov
         error=one/magoberr
         ratio_errors=one

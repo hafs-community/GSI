@@ -732,8 +732,7 @@ subroutine definecoef_regular_grids(nx,ny,nxa_inout,nya_inout,grid_lon,grid_lont
 
   real(r_kind) d(4),ds
   integer(i_kind) kk,k
-
-
+  write(6,*)'thinkdeb9999 bugs in this part '
   nord_e2a=4
   bilinear=.false.
   p_fv3sar2grid%bilinear=bilinear

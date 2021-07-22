@@ -53,7 +53,7 @@
    #
    my $user_name = $ENV{ 'USER' };
    if( $machine eq "hera" ) {
-      $tankdir = "/scratch1/NCEPDEV/da/$user_name/nbns";
+      $tankdir = "/scratch1/NCEPDEV/fv3-cam/$user_name/nbns";
    }
    elsif( $machine eq "cray" ){
       $tankdir = "/gpfs/hps/emc/da/save/$user_name/nbns";
@@ -232,7 +232,8 @@
    #
    #  Web directory
    #
-   my $webdir = "/home/people/emc/www/htdocs/gmb/gdas/radiance/${webuser}/gsi_stat/pngs";
+#cltorg   my $webdir = "/home/people/emc/www/htdocs/gmb/gdas/radiance/${webuser}/gsi_stat/pngs";
+   my $webdir = "/home/Ting.Lei/www-test/gsi_stat/pngs";
    print "Please specify the top level web site directory $server.\n";
    print "  Return to accept default directory location or enter new location.\n";
    print " \n";

@@ -8,9 +8,9 @@ if [[ $MINMON_CONFIG -ne 1 ]]; then
 
    export MINMON_CONFIG=1
 
-   export MY_MACHINE=hera
+export MY_MACHINE=hera
 
-   export MY_MINMON=${MY_MINMON:-/scratch1/NCEPDEV/da/Edward.Safford/noscrub/ProdGSI/util/Minimization_Monitor}
+export MY_MINMON=${MY_MINMON:-/scratch2/NCEPDEV/fv3-cam/Ting.Lei/dr-shun/dr-HAFS/GSI/util/Minimization_Monitor}
 
 
    export HOMEgdas=${MY_MINMON}/nwprod/gdas.${gdas_minmon_ver}
@@ -30,8 +30,8 @@ if [[ $MINMON_CONFIG -ne 1 ]]; then
    export M_IG_GRDS=${M_IG_GRDS:-${MINMON_IG}/grds}
    export M_IG_PARM=${M_IG_PARM:-${MINMON_IG}/parm}
 
-   export MY_STMP=${MY_STMP:-/scratch2/NCEPDEV/stmp3/Edward.Safford}
-   export MY_PTMP=${MY_PTMP:-/scratch2/NCEPDEV/stmp3/Edward.Safford}
+export MY_STMP=${MY_STMP:-/scratch2/NCEPDEV/stmp3/Ting.Lei}
+export MY_PTMP=${MY_PTMP:-/scratch2/NCEPDEV/stmp3/Ting.Lei}
 
    export envir=${RUN_ENVIR:-prod}
 
@@ -41,12 +41,12 @@ if [[ $MINMON_CONFIG -ne 1 ]]; then
    export DATA_IN=${DATA_IN:-${MY_STMP}/${MINMON_SUFFIX}/${RUN}/minmon}	
    export LOGdir=${LOGdir:-${MY_PTMP}/logs/${MINMON_SUFFIX}/${RUN}/minmon}
 
-   export MY_TANKDIR=${MY_TANKDIR:-/scratch1/NCEPDEV/da/Edward.Safford/nbns}
+export MY_TANKDIR=${MY_TANKDIR:-/scratch1/NCEPDEV/fv3-cam/Ting.Lei/nbns}
    export M_TANKverf=${M_TANKverf:-${MY_TANKDIR}}	
 
-   export WEBUSER=${WEBUSER:-esafford}
-   export WEBSERVER=${WEBSERVER:-emcrzdm}
-   export WEBDIR=${WEBDIR:-/home/people/emc/www/htdocs/gmb/gdas/radiance/esafford/gsi_stat/pngs}
+export WEBUSER=${WEBUSER:-emcrzdm}
+export WEBSERVER=${WEBSERVER:-emcrzdm}
+export WEBDIR=${WEBDIR:-/home/Ting.Lei/www-test/gsi_stat/pngs}
 
 
    #

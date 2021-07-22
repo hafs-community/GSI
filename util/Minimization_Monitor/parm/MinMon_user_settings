@@ -14,13 +14,13 @@ if [[ $MINMON_USER_SETTINGS -ne 1 ]]; then
    #  ACCOUNT is used on zeus only for use with the qsub -a flag.  It is
    #  empty on other platforms.
    #
-   export ACCOUNT=${ACCOUNT:-fv3-cpu}
+export ACCOUNT=${ACCOUNT:-fv3-cpu}
 
    #
    #  PROJECT is used on wcoss only with the bjob -P flag.  It is 
    #  empty on other platforms.
    #
-   export PROJECT=${PROJECT:-}
+export PROJECT=${PROJECT:-}
 
    #
    #  JOB_QUEUE is used on wcoss only with the bjob -q flag.  It is 

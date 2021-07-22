@@ -38,6 +38,7 @@ contains
       use hybrid_ensemble_parameters, only: n_ens,grd_ens
       use hybrid_ensemble_parameters, only: l_both_fv3sar_gfs_ens, n_ens_gfs,n_ens_fv3sar
       use hybrid_ensemble_parameters, only: ntlevs_ens,ensemble_path
+      use constants, only: tiny_r_kind
       use control_vectors, only: cvars2d,cvars3d,nc2d,nc3d
       use gsi_bundlemod, only: gsi_bundlecreate
       use gsi_bundlemod, only: gsi_grid
@@ -47,6 +48,7 @@ contains
       use gsi_bundlemod, only: gsi_gridcreate
       use gsi_4dvar, only: ens_fhrlevs
       use gsi_rfv3io_mod, only: type_fv3regfilenameg
+      use hybrid_ensemble_parameters,only : enspert_inflation
   
       implicit none
       class(get_fv3_regional_ensperts_class), intent(inout) :: this
@@ -125,7 +127,7 @@ contains
              fv3_filename%couplerres=trim(ensfilenam_str)//"-coupler.res"
   ! 
   ! READ ENEMBLE MEMBERS DATA
-            if (mype == 0) write(6,'(a,a)') 'CALL READ_FV3_REGIONAL_ENSPERTS FOR ENS DATA with the filename str : ',trim(ensfilenam_str)
+            if (mype == 0) write(6,'(a,a)') 'CALL2 READ_FV3_REGIONAL_ENSPERTS FOR ENS DATA with the filename str : ',trim(ensfilenam_str)
             call this%general_read_fv3_regional(fv3_filename,ps,u,v,tv,rh,oz) 
   
   ! SAVE ENSEMBLE MEMBER DATA IN COLUMN VECTOR
@@ -167,7 +169,7 @@ contains
                      end do
   
                   case('t','T')
-  
+
                      do k=1,grd_ens%nsig
                         do i=1,grd_ens%lon2
                            do j=1,grd_ens%lat2
@@ -281,6 +283,16 @@ contains
          end do
 
      enddo ! it 4d loop
+     write(6,*)"thinkdeb enspert_inflation is ",enspert_inflation
+     if(abs(enspert_inflation-1.0) .gt. tiny_r_kind) then
+      do m=1,ntlevs_ens
+         do n=imem_start,n_ens
+            do i=1,nelen
+               en_perts(n,m)%valuesr4(i)=en_perts(n,m)%valuesr4(i)*enspert_inflation
+            end do
+         end do
+      enddo 
+     endif 
       do m=1,ntlevs_ens
       call gsi_bundledestroy(en_bar(m),istatus)
       if(istatus/=0) then
