@@ -304,7 +304,6 @@ subroutine read_satwnd(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,sis
   nmsg=0
   nrep=0
   ntb =0
-  call closbf(lunin)
   open(lunin,file=trim(infile),form='unformatted')
   call openbf(lunin,'IN',lunin)
   call datelen(10)
@@ -589,6 +588,7 @@ subroutine read_satwnd(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,sis
      endif
 
      call closbf(lunin)
+     close(lunin)
      open(lunin,file=trim(infile),form='unformatted')
      call openbf(lunin,'IN',lunin)
      call datelen(10)
@@ -1573,8 +1573,6 @@ subroutine read_satwnd(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,sis
         enddo  loop_readsb
  !   End of bufr read loop
      enddo loop_msg
-!    Close unit to bufr file
-     call closbf(lunin)
 !    Deallocate arrays used for thinning data
      if (.not.use_all) then
         deallocate(presl_thin)
@@ -1589,6 +1587,8 @@ subroutine read_satwnd(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,sis
 
   enddo loop_convinfo! loops over convinfo entry matches
   deallocate(lmsg,tab,nrep)
+! Close unit to bufr file
+  call closbf(lunin)
  
 
   ! Write header record and data to output file for further processing
@@ -1629,10 +1629,7 @@ subroutine read_satwnd(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,sis
   if(diagnostic_reg .and. nvtest>0) write(6,*)'READ_SATWND:  ',&
        'nvtest,vdisterrmax=',ntest,vdisterrmax
 
-
-
   if (ndata == 0) then
-     call closbf(lunin)
      write(6,*)'READ_SATWND:  closbf(',lunin,')'
   endif
   
