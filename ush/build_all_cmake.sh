@@ -78,7 +78,7 @@ if [ $target = wcoss_d ]; then
 elif [ $target = wcoss -o $target = gaea ]; then
     module purge
     module load $dir_modules/modulefile.ProdGSI.$target
-elif [ $target = hera -o $target = orion -o $target = jet -o $target = s4 ]; then
+elif [ $target = hera -o $target = orion -o $target = s4 ]; then
     module purge
     module use $dir_modules
     module load modulefile.ProdGSI.$target
@@ -105,8 +105,6 @@ fi
 
 if [ $build_type = PRODUCTION -o $build_type = DEBUG ] ; then
   cmake -DBUILD_UTIL=ON -DBUILD_NCDIAG_SERIAL=ON -DCMAKE_BUILD_TYPE=$build_type -DBUILD_CORELIBS=OFF ..
-elif [ $build_type = BUILD_FV3reg ] ; then
-  cmake -DBUILD_PRODUCTION=OFF -DBUILD_WRF=OFF -DBUILD_GFS=OFF -DBUILD_NMMB=OFF -DBUILD_FV3reg=ON -DBUILD_UTIL=ON -DBUILD_NCDIAG_SERIAL=ON -DBUILD_CORELIBS=OFF ..
 else 
   cmake ..
 fi

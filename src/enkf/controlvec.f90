@@ -163,17 +163,16 @@ do i = 1, nc2d
       print *,'Error: 2D variable ', cvars2d(i), ' is not supported in current version.'
       print *,'Supported variables: ', vars2d_supported
     endif
-    call stop2(5021)
+    call stop2(502)
   endif
 enddo
-
 do i = 1, nc3d
   if (getindex(vars3d_supported, cvars3d(i))<0) then
     if (nproc .eq. 0) then 
        print *,'Error: 3D variable ', cvars3d(i), ' is not supported in current version.'
        print *,'Supported variables: ', vars3d_supported
     endif
-    call stop2(5022)
+    call stop2(502)
   endif
 enddo
 
