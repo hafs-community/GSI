@@ -957,7 +957,7 @@ subroutine setupw(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
               error=zero                          !  no data between 400-800mb
            endif
         endif
-        if(itype ==241 ) then
+        if(itype == 241 ) then
            if( presw >399.0_r_kind .and. presw <601.0_r_kind) then  !CIMISS (enhanced AMV) winds
               error=zero                          !  no data between 400-600mb
            endif
