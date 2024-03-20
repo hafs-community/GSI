@@ -1,9 +1,9 @@
 help([[
 ]])
 
-prepend_path("MODULEPATH", "/scratch1/NCEPDEV/nems/role.epic/spack-stack/spack-stack-1.5.1/envs/gsi-addon/install/modulefiles/Core")
+prepend_path("MODULEPATH", "/scratch1/NCEPDEV/nems/role.epic/spack-stack/spack-stack-1.5.1/envs/gsi-addon-env-rocky8/install/modulefiles/Core")
 
-local python_ver=os.getenv("python_ver") or "3.10.8"
+local python_ver=os.getenv("python_ver") or "3.10.13"
 local stack_intel_ver=os.getenv("stack_intel_ver") or "2021.5.0"
 local stack_impi_ver=os.getenv("stack_impi_ver") or "2021.5.1"
 local cmake_ver=os.getenv("cmake_ver") or "3.23.1"
