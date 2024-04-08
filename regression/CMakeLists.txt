@@ -11,7 +11,7 @@ find_program(GSICONTROLEXEC
 if (GSICONTROLEXEC)
   message(STATUS "RT: Control GSIexec Found: ${GSICONTROLEXEC}")
 else()
-  message(WARNING "RT: Control GSIexec Not Found, GSI Regression Tests Disabled!")
+  message(VERBOSE "RT: Control GSIexec Not Found, GSI Regression Tests Disabled!")
 endif()
 
 find_program(ENKFCONTROLEXEC
@@ -26,12 +26,12 @@ find_program(ENKFCONTROLEXEC
 if (ENKFCONTROLEXEC)
   message(STATUS "RT: Control EnKFexec Found: ${ENKFCONTROLEXEC}")
 else()
-  message(WARNING "RT: Control EnKFexec Not Found, EnKF Regression Tests Disabled!")
+  message(VERBOSE "RT: Control EnKFexec Not Found, EnKF Regression Tests Disabled!")
 endif()
 
 # If neither are found, nothing to do; simply return
 if(NOT (GSICONTROLEXEC AND ENKFCONTROLEXEC))
-  message(WARNING "RT: Unable to find Control Executables.  Regression Tests Disabled!")
+  message(VERBOSE "RT: Unable to find Control Executables.  Regression Tests Disabled!")
   set(BUILD_REG_TESTING OFF CACHE BOOL "Regression testing disabled" FORCE)
   return()
 endif()
