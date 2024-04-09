@@ -107,8 +107,8 @@ subroutine calc_linhx(hx, dens, dhx_dx, hxpert, hx_ens, &
   integer(i_kind), intent(in) :: ix, iy, it, ixp, iyp, itp
   real(r_kind), intent(in) :: delx, dely, delxp, delyp, delt, deltp
   type(sparr)                                      ,intent(in   ) :: dhx_dx       ! dH(x)/dx |x_mean profiles
-  type(raggedarr)                                  ,intent(inout) :: hxpert       ! interpolated background
-  real(r_single)                                   ,intent(  out) :: hx_ens       ! H (x_ens)
+  type(raggedarr)                                                 :: hxpert       ! interpolated background
+  real(r_single)                                                  :: hx_ens       ! H (x_ens)
   integer(i_kind) i,j
    write(6,*)'this is a dummy subroutine, running this means something wrong ,stop'
    call stop2(555)
@@ -152,7 +152,7 @@ subroutine calc_linhx_modens(hx, dhx_dx, hxpert, hx_ens, vscale)
   real(r_single)                                   ,intent(in   ) :: hx           ! H(x_mean)
   type(sparr)                                      ,intent(in   ) :: dhx_dx       ! dH(x)/dx |x_mean profiles
   type(raggedarr)                                  ,intent(in   ) :: hxpert       ! interpolated background
-  real(r_single)                                   ,intent(  out) :: hx_ens(neigv)! H (x_ens)
+  real(r_single)                                                  :: hx_ens(neigv)! H (x_ens)
   real(r_double),dimension(neigv,nlevs+1)          ,intent(in   ) :: vscale       ! vertical scaling (for modulated ens)
   integer(i_kind) i
   write(6,*)'this is a dummy subroutine, running this means something wrong ,stop'
