@@ -52,8 +52,8 @@ subroutine setup_linhx(rlat, rlon, time, ix, delx, ixp, delxp, iy, dely,  &
 ! Declare passed variables
   real(r_single)                                   ,intent(in   ) :: rlat, rlon   ! observation lat and lon in radians
   real(r_single)                                   ,intent(in   ) :: time         ! observation time relative to middle of window
-  integer(i_kind), intent(out) :: ix, iy, it, ixp, iyp, itp
-  real(r_kind), intent(out) :: delx, dely, delxp, delyp, delt, deltp
+  integer(i_kind) :: ix, iy, it, ixp, iyp, itp
+  real(r_kind) :: delx, dely, delxp, delyp, delt, deltp
    write(6,*)'this is a dummy subroutine, running this means something wrong ,stop'
    call stop2(555)
 
