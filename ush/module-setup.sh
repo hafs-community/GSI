@@ -49,16 +49,19 @@ elif [[ $MACHINE_ID = stampede* ]] ; then
 
 elif [[ $MACHINE_ID = gaea* ]] ; then
     # We are on GAEA.
-    if ( ! eval module help > /dev/null 2>&1 ) ; then
-        # We cannot simply load the module command.  The GAEA
-        # /etc/profile modifies a number of module-related variables
-        # before loading the module command.  Without those variables,
-        # the module command fails.  Hence we actually have to source
-        # /etc/profile here.
-        source /etc/profile
-    fi
-    module reset
-
+    if [[ $MACHINE_ID = gaeaC6 ]]; then
+        source /opt/cray/pe/lmod/8.7.31/init/sh
+    else
+        if ( ! eval module help > /dev/null 2>&1 ) ; then
+            # We cannot simply load the module command.  The GAEA
+            # /etc/profile modifies a number of module-related variables
+            # before loading the module command.  Without those variables,
+            # the module command fails.  Hence we actually have to source
+            # /etc/profile here.
+            source /etc/profile
+         fi
+     fi
+     module reset
 elif [[ $MACHINE_ID = expanse* ]]; then
     # We are on SDSC Expanse
     if ( ! eval module help > /dev/null 2>&1 ) ; then
