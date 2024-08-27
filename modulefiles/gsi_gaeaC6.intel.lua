@@ -51,6 +51,6 @@ load(pathJoin("gsi-ncdiag",ncdiag_ver))
 --pushenv("CFLAGS", "-axSSE4.2,AVX,CORE-AVX2")
 --pushenv("FFLAGS", "-axSSE4.2,AVX,CORE-AVX2")
 
-pushenv("GSI_BINARY_SOURCE_DIR", "/mnt/lfs4/HFIP/hfv3gfs/glopara/git/fv3gfs/fix/gsi/20230911")
+pushenv("GSI_BINARY_SOURCE_DIR", "/gpfs/f6/hurr1/proj-shared/noscrub/gsi_fix/20240208")
 
 whatis("Description: GSI environment on Gaea with Intel Compilers")
