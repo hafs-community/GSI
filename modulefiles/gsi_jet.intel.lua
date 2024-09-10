@@ -24,4 +24,7 @@ pushenv("FFLAGS", "-axSSE4.2,AVX,CORE-AVX2")
 
 pushenv("GSI_BINARY_SOURCE_DIR", "/lfs5/HFIP/hfv3gfs/glopara/FIX/fix/gsi/20240208")
 
+setenv("CC", "mpiicc")
+setenv("CXX", "mpiicpc")
+setenv("FC", "mpiifort")
 whatis("Description: GSI environment on Jet with Intel Compilers")
