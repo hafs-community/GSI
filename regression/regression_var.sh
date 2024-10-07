@@ -32,7 +32,7 @@ fi
 # Determine the machine
 if [[ -d /scratch1 ]]; then # Hera
   export machine="Hera"
-elif [[ -d /mnt/lfs4 || -d /jetmon || -d /mnt/lfs5 ]]; then # Jet
+elif [[ -d /mnt/lfs5 || -d /jetmon || -d /mnt/lfs5 ]]; then # Jet
   export machine="Jet"
 elif [[ -d /discover ]]; then # NCCS Discover
   export machine="Discover"
