@@ -44,7 +44,7 @@ case $(hostname -f) in
   discover3[1-5].prv.cube) MACHINE_ID=discover ;; ### discover31-35
   *) MACHINE_ID=UNKNOWN ;;  # Unknown platform
   
-  gaea6[1-8].ncrc.gov) MACHINE_ID=gaeaC6 ;; ### Gaea C6 61-68
+  gaea6[1-8].ncrc.gov) MACHINE_ID=gaeac6 ;; ### Gaea C6 61-68
 esac
 
 if [[ ${MACHINE_ID} == "UNKNOWN" ]]; then 
@@ -88,7 +88,7 @@ elif [[ -d /gpfs/f5 && -d /ncrc ]]; then
   MACHINE_ID=gaea
 elif [[ -d /gpfs/f6 && -d /ncrc ]]; then
   # We are on GAEA C6.
-  MACHINE_ID=gaeaC6
+  MACHINE_ID=gaeac6
 elif [[ -d /data/prod ]]; then
   # We are on SSEC's S4
   MACHINE_ID=s4

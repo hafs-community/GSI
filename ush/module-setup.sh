@@ -49,7 +49,7 @@ elif [[ $MACHINE_ID = stampede* ]] ; then
 
 elif [[ $MACHINE_ID = gaea* ]] ; then
     # We are on GAEA.
-    if [[ $MACHINE_ID = gaeaC6 ]]; then
+    if [[ $MACHINE_ID = gaeac6 ]]; then
         source /opt/cray/pe/lmod/8.7.31/init/sh
     else
         if ( ! eval module help > /dev/null 2>&1 ) ; then
