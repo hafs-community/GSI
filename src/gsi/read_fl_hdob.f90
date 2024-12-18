@@ -498,7 +498,7 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
            if (nib > 0) then
                ibit(1:nib) = ibit(1:nib)-1
                if (any(ibit(1:nib) == 1)) then   ! for T/Td
-                  t_qm    = 0 
+                  t_qm    = 4
                   q_qm    = 4 
                endif
                if (any(ibit(1:nib) == 2)) then   ! for uv 
