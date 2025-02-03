@@ -1694,7 +1694,7 @@ subroutine read_prepbufr(nread,ndata,nodata,infile,obstype,lunout,twindin,sis,&
                  do k=1,levs
                     tvflg(k)=one                               ! initialize as sensible
                     do j=1,20
-                       if (tpc(k,j)==vtcd) tvflg(k)=zero       ! reset flag if virtual
+                       if (.not. isnan(vtcd) .and. tpc(k,j)==vtcd) tvflg(k)=zero       ! reset flag if virtual
                        if (tpc(k,j)>=bmiss) exit               ! end of stack
                     end do
                  end do
@@ -1713,7 +1713,7 @@ subroutine read_prepbufr(nread,ndata,nodata,infile,obstype,lunout,twindin,sis,&
                              exit
                           end if
                        end if
-                       if (tpc(k,j)==vtcd) then
+                       if (.not. isnan(vtcd) .and. tpc(k,j)==vtcd) then
                           obsdat(3,k)=tobaux(1,k,j+1)
                           qcmark(3,k)=min(tobaux(2,k,j+1),qcmark_huge)
                           tqm(k)=nint(qcmark(3,k))
@@ -1737,7 +1737,7 @@ subroutine read_prepbufr(nread,ndata,nodata,infile,obstype,lunout,twindin,sis,&
                  tobs4q(1,k)=obsdat(3,k)                      ! temp obs read in prepbufr
                  tqm4q(1,k)=tqm(k)
                  do j=1,20
-                    if (tpc(k,j)==vtcd) tvflg4q(1,k)=zero     ! reset flag if virtual
+                    if (.not. isnan(vtcd) .and. tpc(k,j)==vtcd) tvflg4q(1,k)=zero     ! reset flag if virtual
                     if (tpc(k,j)>=bmiss) exit                 ! end of stack
                  end do
               end do
@@ -3413,7 +3413,7 @@ subroutine sonde_ext(obsdat,tpc,qcmark,obserr,drfdat,levsio,kx,vtcd)
         do k=1,levs
            tvflg(k)=one                               ! initialize as sensible
            do j=1,20
-              if (tpc(k,j)==vtcd) tvflg(k)=zero       ! reset flag if virtual
+              if (.not. isnan(vtcd) .and. tpc(k,j)==vtcd) tvflg(k)=zero       ! reset flag if virtual
               if (tpc(k,j)>=bmiss) exit               ! end of stack
            end do
         end do

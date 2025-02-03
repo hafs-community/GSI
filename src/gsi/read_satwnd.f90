@@ -1537,7 +1537,10 @@ subroutine read_satwnd(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,sis
            ithin=ithin_conv(nc)
            ithinp = ithin > 0  .and. ithin <5 .and. qm < 4
 !          if(ithinp  .and. iuse >=0 )then
-           if(ithinp .and. pflag /= 0   )then
+!           if(ithinp .and. pflag /= 0   )then
+! Xu reports floating invalid error with "ithinp  .and. iuse >=0" condition
+! Xu suggests to replace with "ithinp is true" condition instead
+           if(ithinp)then
 !          Interpolate guess pressure profile to observation location
               klon1= int(dlon);  klat1= int(dlat)
               dx   = dlon-klon1; dy   = dlat-klat1
