@@ -328,6 +328,7 @@ subroutine read_prepbufr(nread,ndata,nodata,infile,obstype,lunout,twindin,sis,&
   integer(i_kind) ntime,itime 
   integer(i_kind) ierr_ps,ierr_q,ierr_t,ierr_uv,ierr_pw !  the position of error table collum
   integer(i_kind) idummy1,idummy2,glret,lindx !glret>0 means GLERL code exists.Others are dummy variables
+  integer(i_kind) vtcd,glcd !virtual temp program code and GLERL program code
   real(r_kind) time,timex,time_drift,timeobs,toff,t4dv,zeps
   real(r_kind) qtflg,tdry,rmesh,ediff,usage,ediff_ps,ediff_q,ediff_t,ediff_uv,ediff_pw
   real(r_kind) u0,v0,uob,vob,dx,dy,dx1,dy1,w00,w10,w01,w11
@@ -358,7 +359,6 @@ subroutine read_prepbufr(nread,ndata,nodata,infile,obstype,lunout,twindin,sis,&
   real(r_kind) :: windsensht
 
   real(r_double) rstation_id,qcmark_huge
-  real(r_double) vtcd,glcd !virtual temp program code and GLERL program code
   real(r_double),dimension(8):: hdr,hdrtsb
   real(r_double),dimension(3,255):: hdr3
   real(r_double),dimension(8,255):: drfdat,qcmark,obserr,var_jb
@@ -880,10 +880,10 @@ subroutine read_prepbufr(nread,ndata,nodata,infile,obstype,lunout,twindin,sis,&
   else
      !warn that GLERL adjustment is not available.
      print*, "WARNING: GLERL program code not in this file."
-     glcd=-999._r_double
+     glcd=-999
   endif
 
-  if(print_verbose) write(6,'(1x,A,A,A,2(A,1x,F8.3))') 'read_prepbufr:',        &
+  if(print_verbose) write(6,'(1x,A,A,A,2(A,1x,I8))') 'read_prepbufr:',        &
      trim(adjustl(obstype)),':', '  vtcd= ',vtcd,'  glcd= ',glcd
 
   call init_rjlists
@@ -3363,7 +3363,7 @@ subroutine sonde_ext(obsdat,tpc,qcmark,obserr,drfdat,levsio,kx,vtcd)
 
 ! !INPUT PARAMETERS:
   integer(i_kind)                                  , intent(in   ) ::kx
-  real(r_double)                                   , intent(in   ) ::vtcd
+  integer(i_kind)                                  , intent(in   ) ::vtcd
 
 ! !INPUT/OUTPUT PARAMETERS:
   integer(i_kind)                                  , intent(inout) ::levsio

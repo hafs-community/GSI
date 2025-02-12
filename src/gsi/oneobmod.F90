@@ -173,7 +173,7 @@ contains
     real(r_kind),dimension(1,1):: poe,qoe,toe,woe
     real(r_kind),dimension(1):: xob,yob,dhr
     real(r_kind),dimension(1,1):: pob    
-    real(r_double) vtcd
+    integer(i_kind) vtcd
     integer(i_kind) n,k,iret
     real(r_kind) hdr(10),obs(13,255),qms(10,255),err(10,255),cld2seq(2,1), &
                  cldseq(3,10),owave(1,255),maxtmint(2,255),cldceilh(1,255),&
@@ -304,7 +304,7 @@ contains
           obs(3,k)=tob(k,n)
           obs(4,k)=zob(k,n)
           if (virtmp) then
-             pcd(3,k)=vtcd
+             pcd(3,k)=vtcd*1.
           end if
           obs(7,k)=cat(k,n)
           qms(1,k)=pqm(k,n)
