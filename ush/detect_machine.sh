@@ -28,6 +28,7 @@ case $(hostname -f) in
   hfe1[0-2]) MACHINE_ID=hera ;; ### hera10-12
   hecflow01) MACHINE_ID=hera ;; ### heraecflow01
 
+  ofe0[1-2]) MACHINE_ID=ursa ;; ###  ofe01-02
   s4-submit.ssec.wisc.edu) MACHINE_ID=s4 ;; ### s4
 
   fe[1-8]) MACHINE_ID=jet ;; ### jet01-8
@@ -75,6 +76,9 @@ elif [[ -d /mnt/lfs5 ]]; then
 elif [[ -d /scratch1 ]]; then
   # We are on NOAA Hera
   MACHINE_ID=hera
+elif [[ -d /tds_scratch2/SYSADMIN/pilot-users ]]; then
+  # We are on NOAA Ursa
+  MACHINE_ID=ursa
 elif [[ -d /work ]]; then
   # We are on MSU Orion or Hercules
   mount=$(findmnt -n -o SOURCE /home)
