@@ -490,7 +490,7 @@ subroutine read_bufrtovs(mype,val_tovs,ithin,isfcalc,&
   hdr2b ='SAZA SOZA BEARAZ SOLAZI'
   allocate(data_all(nele,itxmax),data1b8(nchanl),data1b4(nchanl),nrec(itxmax))
 
-
+  nrec = 999999
   next=0
   irec=0
 ! Big loop over standard data feed and possible ears/db data
@@ -701,7 +701,7 @@ subroutine read_bufrtovs(mype,val_tovs,ithin,isfcalc,&
 
            panglr=(start+real(ifovmod-1,r_kind)*step)*deg2rad
            lzaest = asin(rato*sin(panglr))
-           if( msu .or. hirs2 .or. ssu)then
+           if( msu .or. hirs2 .or. hirs3 .or. ssu .or. bfr2bhdr(1) > 1.e5)then
               lza = lzaest
            else
               lza = bfr2bhdr(1)*deg2rad      ! local zenith angle

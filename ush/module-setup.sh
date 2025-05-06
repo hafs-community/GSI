@@ -29,6 +29,13 @@ elif [[ $MACHINE_ID = orion* ]] ; then
     fi
     module purge
 
+elif [[ $MACHINE_ID = container ]] ; then
+    # We are in a container
+    if ( ! eval module help > /dev/null 2>&1 ) ; then
+        source /usr/lmod/lmod/init/bash
+    fi
+    module purge
+
 elif [[ $MACHINE_ID = s4* ]] ; then
     # We are on SSEC Wisconsin S4
     if ( ! eval module help > /dev/null 2>&1 ) ; then
@@ -36,8 +43,8 @@ elif [[ $MACHINE_ID = s4* ]] ; then
     fi
     module purge
 
-elif [[ $MACHINE_ID = wcoss2 ]]; then
-    # We are on WCOSS2
+elif [[ $MACHINE_ID = wcoss2 || $MACHINE_ID = acorn ]]; then
+    # We are on WCOSS2 (cactus, dogwood, or acorn)
     module reset
 
 elif [[ $MACHINE_ID = stampede* ]] ; then
@@ -49,19 +56,16 @@ elif [[ $MACHINE_ID = stampede* ]] ; then
 
 elif [[ $MACHINE_ID = gaea* ]] ; then
     # We are on GAEA.
-    if [[ $MACHINE_ID = gaeac6 ]]; then
-        source /opt/cray/pe/lmod/8.7.31/init/sh
-    else
-        if ( ! eval module help > /dev/null 2>&1 ) ; then
-            # We cannot simply load the module command.  The GAEA
-            # /etc/profile modifies a number of module-related variables
-            # before loading the module command.  Without those variables,
-            # the module command fails.  Hence we actually have to source
-            # /etc/profile here.
-            source /etc/profile
-         fi
-     fi
-     module reset
+    if ( ! eval module help > /dev/null 2>&1 ) ; then
+        # We cannot simply load the module command.  The GAEA
+        # /etc/profile modifies a number of module-related variables
+        # before loading the module command.  Without those variables,
+        # the module command fails.  Hence we actually have to source
+        # /etc/profile here.
+        source /etc/profile
+    fi
+    module reset
+
 elif [[ $MACHINE_ID = expanse* ]]; then
     # We are on SDSC Expanse
     if ( ! eval module help > /dev/null 2>&1 ) ; then
