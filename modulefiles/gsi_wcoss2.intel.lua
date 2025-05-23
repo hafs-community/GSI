@@ -6,7 +6,6 @@ local intel_ver=os.getenv("intel_ver") or "19.1.3.304"
 local craype_ver=os.getenv("craype_ver") or "2.7.17"
 local cray_mpich_ver=os.getenv("cray_mpich_ver") or "8.1.19"
 local cmake_ver= os.getenv("cmake_ver") or "3.20.2"
-local python_ver=os.getenv("python_ver") or "3.8.6"
 local prod_util_ver=os.getenv("prod_util_ver") or "2.0.14"
 local hdf5_ver=os.getenv("hdf5_ver") or "1.14.0"
 local netcdf_ver=os.getenv("netcdf_ver") or "4.9.2"
@@ -22,13 +21,14 @@ local wrf_io_ver=os.getenv("wrf_io_ver") or "1.2.0"
 local ncio_ver=os.getenv("ncio_ver") or "1.1.2"
 local crtm_ver=os.getenv("crtm_ver") or "2.4.0.1"
 local ncdiag_ver=os.getenv("ncdiag_ver") or "1.1.2"
+local ve_hafs_ver=os.getenv("ve_hafs_ver") or "2.1"
 
 load(pathJoin("PrgEnv-intel", PrgEnv_intel_ver))
 load(pathJoin("intel", intel_ver))
 load(pathJoin("craype", craype_ver))
 load(pathJoin("cray-mpich", cray_mpich_ver))
 load(pathJoin("cmake", cmake_ver))
-load(pathJoin("python", python_ver))
+load(pathJoin("ve/hafs", ve_hafs_ver))
 
 load(pathJoin("prod_util", prod_util_ver))
 load(pathJoin("hdf5-A", hdf5_ver))
@@ -45,7 +45,5 @@ load(pathJoin("wrf_io", wrf_io_ver))
 load(pathJoin("ncio-A", ncio_ver))
 load(pathJoin("crtm", crtm_ver))
 load(pathJoin("ncdiag-A",ncdiag_ver))
-
-pushenv("GSI_BINARY_SOURCE_DIR", "/lfs/h2/emc/global/noscrub/emc.global/FIX/fix/gsi/20240208")
 
 whatis("Description: GSI environment on WCOSS2")
