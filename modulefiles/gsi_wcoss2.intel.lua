@@ -46,4 +46,8 @@ load(pathJoin("ncio-A", ncio_ver))
 load(pathJoin("crtm", crtm_ver))
 load(pathJoin("ncdiag-A",ncdiag_ver))
 
+setenv("CMAKE_C_COMPILER", "cc")
+setenv("CMAKE_CXX_COMPILER", "CC")
+setenv("CMAKE_Fortran_COMPILER", "ftn")
+
 whatis("Description: GSI environment on WCOSS2")

@@ -23,4 +23,8 @@ pushenv("FFLAGS", "-xHOST")
 
 pushenv("GSI_BINARY_SOURCE_DIR", "/work/noaa/global/glopara/fix/gsi/20240208")
 
+setenv("CMAKE_C_COMPILER", "mpiicc")
+setenv("CMAKE_CXX_COMPILER", "mpiicpc")
+setenv("CMAKE_Fortran_COMPILER", "mpiifort")
+
 whatis("Description: GSI environment on Orion with Intel Compilers")

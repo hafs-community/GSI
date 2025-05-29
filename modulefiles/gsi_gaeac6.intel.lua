@@ -51,6 +51,10 @@ load(pathJoin("gsi-ncdiag",ncdiag_ver))
 --pushenv("CFLAGS", "-axSSE4.2,AVX,CORE-AVX2")
 --pushenv("FFLAGS", "-axSSE4.2,AVX,CORE-AVX2")
 
+setenv("CMAKE_C_COMPILER", "cc")
+setenv("CMAKE_CXX_COMPILER", "CC")
+setenv("CMAKE_Fortran_COMPILER", "ftn")
+
 pushenv("GSI_BINARY_SOURCE_DIR", "/gpfs/f6/hurr1/proj-shared/noscrub/gsi_fix/20240208")
 
 whatis("Description: GSI environment on Gaea with Intel Compilers")

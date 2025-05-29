@@ -20,6 +20,10 @@ load(pathJoin("prod_util", prod_util_ver))
 pushenv("CFLAGS", "-xHOST")
 pushenv("FFLAGS", "-xHOST")
 
+setenv("CMAKE_C_COMPILER", "mpiicc")
+setenv("CMAKE_CXX_COMPILER", "mpiicpc")
+setenv("CMAKE_Fortran_COMPILER", "mpiifort")
+
 pushenv("GSI_BINARY_SOURCE_DIR", "/scratch1/NCEPDEV/global/glopara/fix/gsi/20240208")
 
 whatis("Description: GSI environment on Hera with Intel Compilers")

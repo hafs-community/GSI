@@ -22,6 +22,9 @@ pushenv("FFLAGS", "-axSSE4.2,AVX,CORE-AVX2")
 
 pushenv("GSI_BINARY_SOURCE_DIR", "/lfs5/HFIP/hfv3gfs/glopara/FIX/fix/gsi/20240208")
 
+setenv("CMAKE_C_COMPILER", "mpiicc")
+setenv("CMAKE_CXX_COMPILER", "mpiicpc")
+setenv("CMAKE_Fortran_COMPILER", "mpiifort")
 setenv("CC", "mpiicc")
 setenv("CXX", "mpiicpc")
 setenv("FC", "mpiifort")
