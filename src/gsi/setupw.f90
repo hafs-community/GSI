@@ -75,6 +75,10 @@ subroutine setupw(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
   use sparsearr, only: sparr2, new, size, writearray, fullarray
   use aux2dvarflds, only: rtma_comp_fact10
 
+  ! added by Dan Wu for output ensemble spread at obs space
+  use hybrid_ensemble_parameters, only: u_perts, v_perts
+  use hybrid_ensemble_parameters, only: n_ens
+  use hybrid_ensemble_parameters, only: write_obs_sprd
 
   ! The following variables are the coefficients that describe the
   ! linear regression fits that are used to define the dynamic
@@ -280,6 +284,11 @@ subroutine setupw(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
   real(r_kind),dimension(34)::ptabluv
   real(r_single),allocatable,dimension(:,:)::rdiagbuf
 
+  real(r_kind), allocatable, dimension(:,:,:,:) :: suba_u, suba_v
+  real(r_kind) sp_norm,sig_norm_sq_inv
+  real(r_kind) u_ensprd, v_ensprd
+  integer(i_kind) nx, ny, nz, n
+
   integer(i_kind) i,nchar,nreal,k,j,l,ii,itype,ijb
 ! Variables needed for new polar winds QC based on Log Normalized Vector Departure (LNVD)
   real(r_kind) LNVD_wspd
@@ -349,6 +358,56 @@ subroutine setupw(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
 
 ! If require guess vars available, extract from bundle ...
   call init_vars_
+
+!*********************************************************************************
+! get ensemble spread in model space at the first loop
+  if (write_obs_sprd .and. (jiter == jiterstart)) then
+
+    nx = size(u_perts,1)
+    ny = size(u_perts,2)
+    nz = size(u_perts,3)
+!    write(6,*) 'nx, ny, nz:', nx, ny, nz
+    allocate(suba_u(nx, ny, nz, 1))
+    suba_u = zero
+
+    ! calculate the ensemble spread of the selected variable at model space
+     sp_norm=one/real(n_ens, r_kind)
+     sig_norm_sq_inv = n_ens-one
+
+     do n=1,n_ens
+         do k=1,nz
+            do j=1,ny
+              do i=1,nx
+                 suba_u(i,j,k,1) = suba_u(i,j,k,1) + u_perts(i,j,k,n)*u_perts(i,j,k,n)
+              enddo
+            enddo
+         end do
+     end do
+
+     suba_u = sqrt(sp_norm*sig_norm_sq_inv*suba_u)
+
+    nx = size(v_perts,1)
+    ny = size(v_perts,2)
+    nz = size(v_perts,3)
+    allocate(suba_v(nx, ny, nz, 1))
+    suba_v = zero
+
+    ! calculate the ensemble spread of the selected variable at model space
+     do n=1,n_ens
+         do k=1,nz
+            do j=1,ny
+              do i=1,nx
+                 suba_v(i,j,k,1) = suba_v(i,j,k,1) + v_perts(i,j,k,n)*v_perts(i,j,k,n)
+              enddo
+            enddo
+         end do
+     end do
+!     write(6,*) 'calculate the sum of v ensemble members of the first time level successfully'
+
+     suba_v = sqrt(sp_norm*sig_norm_sq_inv*suba_v)
+!     write(6,*) 'calculate the v ensemble spread successfully'
+
+  endif ! end of calculating ensemble spread at the first loop
 
 !******************************************************************************
 ! Read and reformat observations in work arrays.
@@ -677,6 +736,16 @@ subroutine setupw(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
         call tintrp31(ges_v,vgesin,dlat,dlon,dpres,dtime, &
            hrdifsig,mype,nfldsig)
 
+   ! interpolate the ensemble spread to the obs data location
+        if (write_obs_sprd .and. (jiter == jiterstart)) then
+!           write(6,*) 'interpolating the ensemble spread to the obs data location:'
+           call tintrp31(suba_u,u_ensprd,dlat,dlon,dpres,dtime, &
+                3,mype,1)
+           call tintrp31(suba_v,v_ensprd,dlat,dlon,dpres,dtime, &
+                3,mype,1)
+!           write(6,*) 'interpolation completed!'
+        endif
+
         iz = max(1, min( int(dpres), nsig))
         delz = max(zero, min(dpres - real(iz,r_kind), one))
 
@@ -740,6 +809,10 @@ subroutine setupw(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
 
            ugesin=factw*ugesin
            vgesin=factw*vgesin
+           if (write_obs_sprd .and. (jiter == jiterstart)) then
+             u_ensprd=factw*u_ensprd
+             v_ensprd=factw*v_ensprd
+           end if
 
            if (save_jacobian) then
               dhx_dx_u%val = factw * dhx_dx_u%val
@@ -805,6 +878,14 @@ subroutine setupw(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
         call tintrp31(ges_v,vgesin,dlat,dlon,dpres,dtime, &
            hrdifsig,mype,nfldsig)
 
+   ! interpolate the ensemble spread to the obs data location
+        if (write_obs_sprd .and. (jiter == jiterstart)) then
+           call tintrp31(suba_u,u_ensprd,dlat,dlon,dpres,dtime, &
+                3,mype,1)
+           call tintrp31(suba_v,v_ensprd,dlat,dlon,dpres,dtime, &
+                3,mype,1)
+        endif
+
         iz = max(1, min( int(dpres), nsig))
         delz = max(zero, min(dpres - real(iz,r_kind), one))
 
@@ -850,6 +931,10 @@ subroutine setupw(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
            end if
            ugesin=factw*ugesin   
            vgesin=factw*vgesin
+           if (write_obs_sprd .and. (jiter == jiterstart)) then
+             u_ensprd=factw*u_ensprd
+             v_ensprd=factw*v_ensprd
+           end if
 
            if (save_jacobian) then
               dhx_dx_u%val = factw * dhx_dx_u%val
@@ -1827,6 +1912,12 @@ subroutine setupw(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
               call nc_diag_metadata_to_single("v_Obs_Minus_Forecast_unadjusted",vob_e,vges_e,'-')
            endif
 
+           ! output the ensemble spread to diag files
+          if (write_obs_sprd .and. (jiter == jiterstart)) then
+              call nc_diag_metadata_to_single("u_Ensemble_Spread",u_ensprd)
+              call nc_diag_metadata_to_single("v_Ensemble_Spread",v_ensprd)
+          endif
+
            if (lobsdiagsave) then
               !?? In current implmentation, only udiag is used.  Is this by design
               !?? or an unexpected bug?
@@ -1872,6 +1963,8 @@ subroutine setupw(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
     if(allocated(ges_u )) deallocate(ges_u )
     if(allocated(ges_z )) deallocate(ges_z )
     if(allocated(ges_ps)) deallocate(ges_ps)
+    if(allocated(suba_u)) deallocate(suba_u)
+    if(allocated(suba_v)) deallocate(suba_v)
   end subroutine final_vars_
 
 end subroutine setupw

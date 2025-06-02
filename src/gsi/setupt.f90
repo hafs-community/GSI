@@ -85,6 +85,11 @@ subroutine setupt(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
 
   use sparsearr, only: sparr2, new, size, writearray, fullarray
 
+  ! added by Dan Wu for output ensemble spread at obs space
+  use hybrid_ensemble_parameters, only: t_perts
+  use hybrid_ensemble_parameters, only: n_ens
+  use hybrid_ensemble_parameters, only: write_obs_sprd
+
   ! The following variables are the coefficients that describe the
   ! linear regression fits that are used to define the dynamic
   ! observation error (DOE) specifications for all reconnissance
@@ -291,6 +296,11 @@ subroutine setupt(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
 
   real(r_kind),dimension(nsig):: prsltmp2
 
+  real(r_kind), allocatable, dimension(:,:,:,:) :: suba_t
+  real(r_kind) sp_norm,sig_norm_sq_inv
+  real(r_kind) t_ensprd
+  integer(i_kind) nx, ny, nz, n
+
   integer(i_kind) i,j,nchar,nreal,k,ii,iip,jj,l,nn,ibin,idia,idia0,ix,ijb
   integer(i_kind) mm1,jsig,iqt
   integer(i_kind) itype,msges
@@ -370,6 +380,38 @@ subroutine setupt(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
 
 ! If require guess vars available, extract from bundle ...
   call init_vars_
+
+!*********************************************************************************
+! get ensemble spread in model space at the first loop
+  if (write_obs_sprd .and. (jiter == jiterstart)) then
+
+!    write(6,*) 'start calculating ensemble spread:'
+    nx = size(t_perts,1)
+    ny = size(t_perts,2)
+    nz = size(t_perts,3)
+!    write(6,*) 'nx, ny, nz:', nx, ny, nz
+    allocate(suba_t(nx, ny, nz, 1))
+    suba_t = zero
+
+     ! calculate the ensemble spread of the selected variable at model space
+     sp_norm=one/real(n_ens, r_kind)
+     sig_norm_sq_inv = n_ens-one
+
+     do n=1,n_ens
+         do k=1,nz
+            do j=1,ny
+              do i=1,nx
+                 suba_t(i,j,k,1) = suba_t(i,j,k,1) + t_perts(i,j,k,n)*t_perts(i,j,k,n)
+              enddo
+            enddo
+         end do
+     end do
+
+
+     suba_t = sqrt(sp_norm*sig_norm_sq_inv*suba_t)
+!     write(6,*) 'calculate the ensemble spread successfully'
+
+  endif ! end of calculating ensemble spread at the first loop
 
 !*********************************************************************************
 ! Read and reformat observations in work arrays.
@@ -861,6 +903,13 @@ subroutine setupt(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
            endif
         endif
 
+     endif
+
+     ! interpolate the ensemble spread to the obs data location
+     if (write_obs_sprd .and. (jiter == jiterstart)) then
+!     write(6,*) 'interpolating into obs location'
+       call tintrp31(suba_t,t_ensprd,dlat,dlon,dpres,dtime, &
+                3,mype,1)
      endif
 
 !    Get approximate k value of surface by using surface pressure
@@ -1852,6 +1901,11 @@ subroutine setupt(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
     call nc_diag_metadata_to_single("Obs_Minus_Forecast_adjusted",ddiff      )
     call nc_diag_metadata_to_single("Obs_Minus_Forecast_unadjusted",tob,tges,'-')
 
+! add the ensemble spread at obs location for the first loop
+    if (write_obs_sprd .and. (jiter == jiterstart)) then
+       call nc_diag_metadata_to_single("Ensemble_Spread",t_ensprd)
+    endif
+
     if (aircraft_t_bc_pof .or. aircraft_t_bc .or. aircraft_t_bc_ext) then
        call nc_diag_metadata_to_single("Data_Pof",data(ipof,i))
        call nc_diag_metadata_to_single("Data_Vertical_Velocity",data(ivvlc,i))
@@ -2000,6 +2054,7 @@ subroutine setupt(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
     if(allocated(ges_ps)) deallocate(ges_ps)
     if(allocated(ges_q2)) deallocate(ges_q2)
     if(allocated(ges_t2m)) deallocate(ges_t2m)
+    if(allocated(suba_t)) deallocate(suba_t)
   end subroutine final_vars_
 
 end subroutine setupt

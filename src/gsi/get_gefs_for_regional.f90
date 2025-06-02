@@ -41,6 +41,8 @@ subroutine get_gefs_for_regional
                      fv3_regional
   use hybrid_ensemble_parameters, only: region_lat_ens,region_lon_ens
   use hybrid_ensemble_parameters, only: en_perts,ps_bar,nelen
+  use hybrid_ensemble_parameters, only: q_perts, t_perts, u_perts, v_perts
+  use hybrid_ensemble_parameters, only: write_obs_sprd
   use hybrid_ensemble_parameters, only: n_ens_gfs,weight_ens_gfs,grd_ens,grd_a1,grd_e1,p_e2a,uv_hyb_ens,dual_res
   use hybrid_ensemble_parameters, only: full_ensemble,q_hyb_ens,l_ens_in_diff_time,write_ens_sprd
   use hybrid_ensemble_parameters, only: ntlevs_ens,ensemble_path,jcap_ens
@@ -111,6 +113,10 @@ subroutine get_gefs_for_regional
   real(r_kind),allocatable,dimension(:,:,:)::ut,vt,tt,rht,ozt,cwt
   real(r_single),pointer,dimension(:,:,:):: w3
   real(r_single),pointer,dimension(:,:):: w2
+  real(r_kind),allocatable :: q_sub(:,:,:)
+  real(r_kind),allocatable,dimension(:,:,:)::qbar
+  real(r_kind),allocatable,dimension(:,:,:,:)::q_eg
+  real(r_kind),allocatable,dimension(:,:,:)::qt
 
   character(len=*),parameter::myname='get_gefs_for_regional'
   real(r_kind) bar_norm,sig_norm,kapr,kap1,trk
@@ -161,6 +167,7 @@ subroutine get_gefs_for_regional
   integer(i_kind) n_ens_temp
   real(r_kind),allocatable::psfc_out(:,:)
   integer(i_kind) ilook,jlook,ier
+  integer(i_kind) nx, ny, nz
 
   real(r_kind) dlon,dlat,uob,vob,dlon_ens,dlat_ens
   integer(i_kind) ii,jj,n1
@@ -599,6 +606,8 @@ subroutine get_gefs_for_regional
   allocate( p_eg_nmmb(grd_mix%lat2,grd_mix%lon2,n_ens_gfs))
   st_eg=zero ; vp_eg=zero ; t_eg=zero ; rh_eg=zero ; oz_eg=zero ; cw_eg=zero 
   p_eg_nmmb=zero
+  allocate(q_eg(grd_mix%lat2,grd_mix%lon2,grd_mix%nsig,n_ens_gfs))
+  q_eg=zero;
 
 !
 ! prepare terrain height
@@ -835,6 +844,17 @@ subroutine get_gefs_for_regional
      !                                                write(fname,'("ges_ps")')
      !                                                call grads1a(ges_ps(:,:),1,mype,trim(fname))
 
+     ! keep q
+     allocate(q_sub(grd_mix%lat2,grd_mix%lon2,grd_mix%nsig))
+     do k=1, grd_mix%nsig
+          kq=k+3*grd_mix%nsig
+          do j=1,grd_mix%lon2
+             do i=1,grd_mix%lat2
+                q_sub(i,j,k)=work_sub(1,i,j,kq)
+             end do
+          end do
+     end do
+
 
 ! If not using Q perturbations, convert to RH
      if (.not.q_hyb_ens) then
@@ -923,7 +943,9 @@ subroutine get_gefs_for_regional
                   t_eg(i,j,k,n)=work_sub(1,i,j,kt)     !  now pot virtual temp
                  rh_eg(i,j,k,n)=work_sub(1,i,j,kq)     !  now rh
                  oz_eg(i,j,k,n)=work_sub(1,i,j,koz)
-                 cw_eg(i,j,k,n)=work_sub(1,i,j,kcw)
+                 cw_eg(i,j,k,n)=work_sub(1,i,j,kcw)i
+                 ! keep q for each ensemble member
+                  q_eg(i,j,k,n)=q_sub(i,j,k)
               end do
            end do
         end do
@@ -935,6 +957,7 @@ subroutine get_gefs_for_regional
         end do
      end do
      deallocate(work_sub,psfc_out)
+     if(allocated(q_sub)) deallocate(q_sub)
 
 !                    pdiffmax=-huge(pdiffmax)
 !                    pdiffmin= huge(pdiffmin)
@@ -971,6 +994,9 @@ subroutine get_gefs_for_regional
 !   compute mean state
   stbar=zero ; vpbar=zero ; tbar=zero ; rhbar=zero ; ozbar=zero ; cwbar=zero 
   pbar_nmmb=zero
+  allocate(qbar(grd_mix%lat2,grd_mix%lon2,grd_mix%nsig))
+  qbar=zero
+
   do n=1,n_ens_gfs
      do k=1,grd_mix%nsig
         do j=1,grd_mix%lon2
@@ -981,6 +1007,8 @@ subroutine get_gefs_for_regional
               rhbar(i,j,k)=rhbar(i,j,k)+rh_eg(i,j,k,n)
               ozbar(i,j,k)=ozbar(i,j,k)+oz_eg(i,j,k,n)
               cwbar(i,j,k)=cwbar(i,j,k)+cw_eg(i,j,k,n)
+              ! qbar
+               qbar(i,j,k)= qbar(i,j,k)+ q_eg(i,j,k,n)
            end do
         end do
      end do
@@ -1002,6 +1030,7 @@ subroutine get_gefs_for_regional
            rhbar(i,j,k)=rhbar(i,j,k)*bar_norm
            ozbar(i,j,k)=ozbar(i,j,k)*bar_norm
            cwbar(i,j,k)=cwbar(i,j,k)*bar_norm
+            qbar(i,j,k)= qbar(i,j,k)*bar_norm
         end do
      end do
   end do
@@ -1035,6 +1064,7 @@ subroutine get_gefs_for_regional
               rh_eg(i,j,k,n)=rh_eg(i,j,k,n)-rhbar(i,j,k)
               oz_eg(i,j,k,n)=oz_eg(i,j,k,n)-ozbar(i,j,k)
               cw_eg(i,j,k,n)=cw_eg(i,j,k,n)-cwbar(i,j,k)
+               q_eg(i,j,k,n)= q_eg(i,j,k,n)- qbar(i,j,k)
            end do
         end do
      end do
@@ -1045,6 +1075,7 @@ subroutine get_gefs_for_regional
      end do
   end do
   deallocate(stbar,vpbar,rhbar,ozbar,cwbar)
+  if(allocated(qbar)) deallocate(qbar)
 
 ! now obtain mean pressure prsl
 ! compute 3d pressure on interfaces
@@ -1121,6 +1152,8 @@ subroutine get_gefs_for_regional
   allocate(rht(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig))
   allocate(ozt(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig))
   allocate(cwt(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig))
+  allocate(qt(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig))
+
   do n=1,n_ens_gfs
      do j=1,grd_ens%lon2
         do i=1,grd_ens%lat2
@@ -1210,6 +1243,20 @@ subroutine get_gefs_for_regional
            do k=1,grd_ens%nsig
               cwt(i,j,k)=ysplo(k)
            end do
+
+!    q
+           do k=1,grd_mix%nsig
+              yspli(k)=q_eg(i,j,k,n)
+           end do
+           call intp_spl(xspli,yspli,xsplo,ysplo,grd_mix%nsig,grd_ens%nsig)
+!               following is to correct for bug in intp_spl
+           do k=1,grd_ens%nsig
+              if(xsplo(k) < xspli(grd_mix%nsig)) ysplo(k)=yspli(grd_mix%nsig)
+              if(xsplo(k) > xspli(1)) ysplo(k)=yspli(1)
+           end do
+           do k=1,grd_ens%nsig
+              qt(i,j,k)=ysplo(k)
+           end do           
 
         end do
      end do
@@ -1330,6 +1377,33 @@ subroutine get_gefs_for_regional
 !!                                                      write(fname,'("test_cwp_",i2.2)')n
 !!                                                      call grads1a(cwt,grd_ens%nsig,mype,trim(fname))
 !                                                  end if
+     ! save q ensemble perturbation for analysis time
+     if (write_obs_sprd) then
+        if ((ntlevs_ens>1) .and. (it==2)) then
+          do k=1, grd_ens%nsig
+            do j=1, grd_ens%lon2
+              do i=1, grd_ens%lat2
+                q_perts(i,j,k,n)=qt(i,j,k)*sig_norm
+                t_perts(i,j,k,n)=tt(i,j,k)*sig_norm
+                u_perts(i,j,k,n)=ut(i,j,k)*sig_norm
+                v_perts(i,j,k,n)=vt(i,j,k)*sig_norm
+              end do
+            end do
+          end do
+        else
+          do k=1, grd_ens%nsig
+            do j=1, grd_ens%lon2
+              do i=1, grd_ens%lat2
+                q_perts(i,j,k,n)=qt(i,j,k)*sig_norm
+                t_perts(i,j,k,n)=tt(i,j,k)*sig_norm
+                u_perts(i,j,k,n)=ut(i,j,k)*sig_norm
+                v_perts(i,j,k,n)=vt(i,j,k)*sig_norm
+              end do
+            end do
+          end do
+        endif
+     endif
+
      do ic3=1,nc3d
 
         if(ntlevs_ens > 1) then
@@ -1474,6 +1548,8 @@ subroutine get_gefs_for_regional
   deallocate(xspli,yspli,xsplo,ysplo)
   deallocate(prsl)
   deallocate(ut,vt,tt,rht,ozt,cwt)
+  if(allocated(q_eg)) deallocate(q_eg)
+  if(allocated(qt)) deallocate(qt)
 
   enddo ! it=1,ntlevs_ens
   return

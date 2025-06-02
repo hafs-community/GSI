@@ -1131,6 +1131,7 @@ end subroutine normal_new_factorization_rf_y
     use hybrid_ensemble_parameters, only: n_ens,grd_ens,ntlevs_ens
     use hybrid_ensemble_parameters, only: nelen,en_perts,ps_bar
     use hybrid_ensemble_parameters, only: ntotensgrp
+    use hybrid_ensemble_parameters, only: q_perts, t_perts, u_perts, v_perts
 
     implicit none
 
@@ -1165,6 +1166,11 @@ end subroutine normal_new_factorization_rf_y
                                  grd_ens%latlon11,grd_ens%latlon1n,n_ens,ntotensgrp,ntlevs_ens
        write(6,*)' in create_ensemble, total bytes allocated=',4*nelen*n_ens*ntotensgrp*ntlevs_ens
     end if
+
+    allocate(q_perts(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig,n_ens))
+    allocate(t_perts(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig,n_ens))
+    allocate(u_perts(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig,n_ens))
+    allocate(v_perts(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig,n_ens))
     return
 
   end subroutine create_ensemble
@@ -1208,6 +1214,7 @@ end subroutine normal_new_factorization_rf_y
                                           pseudo_hybens,regional_ensemble_option,&
                                           i_en_perts_io
     use hybrid_ensemble_parameters, only: nelen,en_perts,ps_bar
+    use hybrid_ensemble_parameters, only: q_perts, t_perts, u_perts, v_perts
     use hybrid_ensemble_parameters, only: l_both_fv3sar_gfs_ens 
     use gsi_enscouplermod, only: gsi_enscoupler_put_gsi_ens
     use mpimod, only: mype
@@ -1741,6 +1748,7 @@ end subroutine normal_new_factorization_rf_y
 !$$$
     use hybrid_ensemble_parameters, only: l_hyb_ens,n_ens,ntlevs_ens
     use hybrid_ensemble_parameters, only: en_perts,ps_bar
+    use hybrid_ensemble_parameters, only: q_perts, t_perts, u_perts, v_perts
     use hybrid_ensemble_parameters, only: ntotensgrp
     use hybrid_ensemble_parameters, only: l_mgbf_loc
     implicit none
@@ -1761,6 +1769,7 @@ end subroutine normal_new_factorization_rf_y
        enddo
        deallocate(ps_bar)
        deallocate(en_perts)
+       deallocate(q_perts, t_perts, u_perts, v_perts)
        if(l_mgbf_loc) call print_mg_timers("mgbf_timing_cpu.csv", print_cpu, mype)
     end if
     return
