@@ -943,7 +943,7 @@ subroutine get_gefs_for_regional
                   t_eg(i,j,k,n)=work_sub(1,i,j,kt)     !  now pot virtual temp
                  rh_eg(i,j,k,n)=work_sub(1,i,j,kq)     !  now rh
                  oz_eg(i,j,k,n)=work_sub(1,i,j,koz)
-                 cw_eg(i,j,k,n)=work_sub(1,i,j,kcw)i
+                 cw_eg(i,j,k,n)=work_sub(1,i,j,kcw)
                  ! keep q for each ensemble member
                   q_eg(i,j,k,n)=q_sub(i,j,k)
               end do
