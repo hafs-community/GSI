@@ -60,14 +60,14 @@
  private
 
  integer(i_kind) , parameter, public    :: npoly = 30
- integer(i_kind) , parameter, private   :: maxinstr = 20
+ integer(i_kind) , parameter, private   :: maxinstr = 21
  integer(i_kind) , dimension(maxinstr), private:: maxfov = (/ 2048,2048,2048, &
                                                               56,56,56, &
                                                               56,56, 8, &
                                                               11,30,90, &
                                                               90,96,96, &
                                                               96,90,30, &
-                                                              130,96 /)
+                                                              130,96,81 /)
 
  real(r_kind) , dimension(:), allocatable, private :: alongtrackangle
  real(r_kind) , dimension(:), allocatable, private :: crosstrackangle
@@ -756,6 +756,7 @@
 !                18 = IASI
 !                19 = SAPHIR
 !                20 = ATMS 3.3 DEG
+!                21 = TROPICS
 !   satid     - satellite id
 !   expansion - expansion factor.  Must be 1.0 for accurate renderine, 
 !               > 1.0 makes bigger ellipses, < 1.0 makes smaller ellipses.
@@ -991,6 +992,7 @@
 !                      17 = AIRS
 !                      18 = IASI
 !                      20 = ATMS 3.3 DEG
+!                      21 TROPICS
 !   satellite_azimuth - satellite azimuth angle
 !   lat               - latitude of center of fov 
 !   lon               - longitude of center of fov
@@ -1168,26 +1170,28 @@
                                                       1.1e0_r_kind , 10.e0_r_kind/9.e0_r_kind , 1.1e0_r_kind, &
                                                       1.1e0_r_kind, 1.1e0_r_kind,                             & 
                                                       1.1e0_r_kind, 3.e0_r_kind+one/three, 0.6660465_r_kind,  & 
-                                                      1.1e0_r_kind  /)
+                                                      1.1e0_r_kind, 1.50_r_kind  /)
  real(r_kind) , dimension(maxinstr) :: fovangle  = (/ 0.0745_r_kind,   0.0745_r_kind,  0.0745_r_kind,         &
                                                       1.22_r_kind,  1.40_r_kind,  1.40_r_kind,                &
                                                       1.40_r_kind,  0.70_r_kind,  10.0_r_kind,                &
                                                       7.5_r_kind,  3.3_r_kind,    1.1_r_kind,                 &
                                                       1.1_r_kind ,   5.2_r_kind,   2.2_r_kind,   1.1_r_kind,  &
                                                       1.1_r_kind, 0.839383_r_kind, 0.6660465_r_kind,          &
-                                                      3.3_r_kind /)
+                                                      3.3_r_kind, 1.50_r_kind /)
  real(r_kind) , dimension(maxinstr) :: halfscan  = (/ 55.37_r_kind, 55.37_r_kind, 55.25_r_kind, 49.5_r_kind,  &
                                                       49.5_r_kind,  49.5_r_kind,  49.5_r_kind,  49.5_r_kind,  &
                                                       35.0_r_kind,  47.3685_r_kind,                           &
                                                       48._r_kind+one/three,  48.95_r_kind,          &
                                                       48.95_r_kind, 52.73_r_kind, 52.73_r_kind, 52.73_r_kind, &
                                                       44.5_r_kind*10.0_r_kind/9.0_r_kind,                     &
-                                                      48._r_kind+one/three, 42.96_r_kind, 52.73_r_kind  /)
+                                                      48._r_kind+one/three, 42.96_r_kind, 52.73_r_kind,       &
+                                                      69.9_r_kind  /)
  real(r_kind) , dimension(maxinstr) :: assymetry = (/ zero,         zero,         zero,         zero,         &
                                                       zero,         zero,        -1.8_r_kind,   zero,         &
                                                       zero,         zero,         zero,         zero,         &
                                                       zero,         zero,         zero,         zero,         &
-                                                      zero,         zero,         zero,         zero       /)
+                                                      zero,         zero,         zero,         zero,         &
+                                                      zero /)
 
 ! declare local variables
  real(r_kind) nadirangle, nadirangle_m, nadirangle_p
@@ -1287,10 +1291,22 @@
        height=866._r_kind
     case('npp')
        height=840._r_kind
-    case('n20', 'n21', 'n22', 'n23')
+    case('n20')
        height=840._r_kind
-    case('metop-sg-a1', 'metop-sg-a2', 'metop-sg-a3') 
+    case('n21')
        height=840._r_kind
+    case('sv1_srf_v4')
+       height=536._r_kind
+    case('tropics-01')
+       height=536._r_kind
+    case('tropics-03')
+       height=536._r_kind
+    case('tropics-05')
+       height=536._r_kind
+    case('tropics-06')
+       height=536._r_kind
+    case('tropics-07')
+       height=536._r_kind
     case default
        write(6,*) 'GET_SAT_HEIGHT: ERROR, unrecognized satellite id: ', trim(satid)
        valid=.false.
@@ -1400,7 +1416,7 @@
                                                      7.5_r_kind,    3.3_r_kind,    1.1_r_kind,              &
                                                      1.1_r_kind,    5.2_r_kind,    2.2_r_kind, 1.1_r_kind,  &
                                                      1.1_r_kind, 0.839383_r_kind, 0.6660465_r_kind,         &
-                                                     3.3_r_kind /)
+                                                     3.3_r_kind, 1.6_r_kind /)
 
 ! Declare local variables.
  integer(i_kind) :: fov

@@ -1703,7 +1703,7 @@ contains
    logical mean_only
    logical ssmi,ssmis,amsre,amsre_low,amsre_mid,amsre_hig,tmi,gmi,amsr2,saphir
    logical ssmis_las,ssmis_uas,ssmis_env,ssmis_img
-   logical avhrr,avhrr_navy,goessndr,goes_img,ahi,seviri,abi,viirs
+   logical avhrr,avhrr_navy,goessndr,goes_img,ahi,seviri,abi,viirs,tms
 
    character(len=20):: obstype,platid
    character(len=20):: satsens,satsens_id
@@ -1905,6 +1905,7 @@ contains
       gmi        = obstype == 'gmi'
       saphir     = obstype == 'saphir'
       amsr2      = obstype == 'amsr2'
+      tms        = obstype == 'tms'
       mean_only=ssmi .or. ssmis .or. amsre .or. goessndr .or. goes_img & 
                 .or. ahi .or. seviri .or. tmi .or. abi
 !     Allocate arrays and initialize

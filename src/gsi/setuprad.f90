@@ -286,7 +286,7 @@ contains
       ifrac_sea,ifrac_lnd,ifrac_ice,ifrac_sno,itsavg, &
       izz,idomsfc,isfcr,iff10,ilone,ilate, &
       isst_hires,isst_navy,idata_type,iclr_sky,itref,idtw,idtc,itz_tr
-  use qcmod, only: qc_ssmi,qc_geocsr,qc_ssu,qc_avhrr,qc_goesimg,qc_msu,qc_irsnd,qc_amsua,qc_mhs,qc_atms
+  use qcmod, only: qc_ssmi,qc_geocsr,qc_ssu,qc_avhrr,qc_goesimg,qc_msu,qc_irsnd,qc_amsua,qc_mhs,qc_atms,qc_tms
   use crtm_interface, only: ilzen_ang2,iscan_ang2,iszen_ang2,isazi_ang2
   use clw_mod, only: calc_clw, ret_amsua, gmi_37pol_diff
   use qcmod, only: igood_qc,ifail_gross_qc,ifail_interchan_qc,ifail_crtm_qc,ifail_satinfo_qc,qc_noirjaco3,ifail_cloud_qc
@@ -369,7 +369,7 @@ contains
   type(sparr2) :: dhx_dx
   logical avhrr,avhrr_navy,viirs,lextra,ssu,iasi,iasing,cris,seviri,atms
   logical ssmi,ssmis,amsre,amsre_low,amsre_mid,amsre_hig,amsr2,gmi,saphir
-  logical :: mws
+  logical :: mws,tms
   logical ssmis_las,ssmis_uas,ssmis_env,ssmis_img
   logical sea,mixed,land,ice,snow,toss,l_may_be_passive,eff_area
   logical microwave, microwave_low
@@ -377,6 +377,8 @@ contains
   logical in_curbin, in_anybin, save_jacobian
   logical account_for_corr_obs
   logical,dimension(nobs):: zero_irjaco3_pole
+
+  real(r_kind) si,si2,si3,si4,si5,si6,si7,si8,si9,si10,si11,si12,si11_test  !!MJK
 
 ! Declare local arrays
 
@@ -530,12 +532,13 @@ contains
   saphir     = obstype == 'saphir'
   abi        = obstype == 'abi'
   mws        = obstype == 'mws'
+  tms        = obstype == 'tms'
 
   ssmis=ssmis_las.or.ssmis_uas.or.ssmis_img.or.ssmis_env.or.ssmis 
 
   microwave=amsua .or. amsub  .or. mhs .or. msu .or. hsb .or. &
             ssmi  .or. ssmis  .or. amsre .or. atms .or. mws .or. &
-            amsr2 .or. gmi  .or.  saphir
+            amsr2 .or. gmi  .or.  saphir .or. tms
 
   microwave_low =amsua  .or.  msu .or. ssmi .or. ssmis .or. amsre
 
@@ -1041,6 +1044,20 @@ contains
            end do
         end if
 !*****
+!       Compute microwave cloud liquid water or graupel water path for bias correction and QC.
+        si = zero
+        si2=zero
+        si3=zero
+        si4=zero
+        si5=zero
+        si6=zero
+        si7=zero
+        si8=zero
+        si9=zero
+        si10=zero
+        si11=zero
+        si12=zero
+        si11_test=zero
         clw_obs=zero
         clw_guess_retrieval=zero
         gwp=zero
@@ -1645,6 +1662,16 @@ contains
         call qc_saphir(nchanl,zsges,luse(n),sea, &
               kraintype,varinv,aivals(1,is),id_qc)
         
+!  ---------- TROPICS -----------------
+!       TROPICS Q C
+
+        else if (tms) then
+
+        call qc_tms(nchanl,nsig,zsges,luse(n),sea, &
+              tbc,tsim, ptau5, emissivity, emissivity_k,varinv,aivals(1,is),id_qc,&
+              si,si2,si3,si4,si5,si6,si7,si8,si9,si10,si11,si12)
+        si11_test = tbc(1) - tbc(11)
+
 !  ---------- SSU  -------------------
 !       SSU Q C
 
@@ -1690,6 +1717,8 @@ contains
                  endif
               else if (ssmis) then
                  errf(i) = min(1.5_r_kind*errf(i),ermax_rad(m))  ! tighten up gross check for SSMIS
+              else if (tms) then
+                 errf(i) = min(2.0_r_kind*errf(i),ermax_rad(m))  ! tighten up gross check for TROPICS
               else if (gmi .or. saphir .or. amsr2) then
                  errf(i) = ermax_rad(m)     ! use ermax for GMI, SAPHIR, and AMSR2 gross check
               else
@@ -2692,6 +2721,20 @@ contains
                  call nc_diag_metadata_to_single("TPWC",tpwc_obs                            )
                  call nc_diag_metadata_to_single("clw_obs",clw_obs                         )
                  call nc_diag_metadata_to_single("clw_guess",clw_guess                       )
+!TROPICS Temporary
+                 call nc_diag_metadata("SI",               sngl(si)                       )
+                 call nc_diag_metadata("SI2",               sngl(si2)                       )
+                 call nc_diag_metadata("SI3",               sngl(si3)                       )
+                 call nc_diag_metadata("SI4",               sngl(si4)                       )
+                 call nc_diag_metadata("SI5",               sngl(si5)                       )
+                 call nc_diag_metadata("SI6",               sngl(si6)                       )
+                 call nc_diag_metadata("SI7",               sngl(si7)                       )
+                 call nc_diag_metadata("SI8",               sngl(si8)                       )
+                 call nc_diag_metadata("SI9",               sngl(si9)                       )
+                 call nc_diag_metadata("SI10",               sngl(si10)                       )
+                 call nc_diag_metadata("SI11",               sngl(si11)                       )
+                 call nc_diag_metadata("SI12",               sngl(si12)                       )
+                 call nc_diag_metadata("SI11TEST",               sngl(si11_test)                       )
 
                  if (nstinfo==0) then
                     data_s(itref,n)  = missing
@@ -2706,6 +2749,7 @@ contains
                  call nc_diag_metadata_to_single("SST_dTz_dTfound",data_s(itz_tr,n)              )       ! d(Tz)/d(Tr)
 
                  call nc_diag_metadata_to_single("Observation",tb_obs0(ich_diag(i))  )     ! observed brightness temperature (K)
+                 call nc_diag_metadata_to_single("SimulatedObs",tsim(ich_diag(i))  )       ! simulated brightness temperature (K)
                  call nc_diag_metadata_to_single("Obs_Minus_Forecast_unadjusted",tbcnob(ich_diag(i))   )     ! observed - simulated Tb with no bias correction (K)
                  call nc_diag_metadata_to_single("Obs_Minus_Forecast_adjusted",tbc0(ich_diag(i)   )  )     ! observed - simulated Tb with bias corrrection (K)
                  errinv = sqrt(varinv0(ich_diag(i)))
@@ -2756,6 +2800,7 @@ contains
                  call nc_diag_metadata("QC_Flag",sngl(id_qc(ich_diag(i))*useflag))! quality control mark or event indicator
 
                  call nc_diag_metadata_to_single("Emissivity",emissivity(ich_diag(i))      )           ! surface emissivity
+                 call nc_diag_metadata_to_single("Emissivity_k",emissivity_k(ich_diag(i))      )           ! surface emissivity
                  call nc_diag_metadata_to_single("Weighted_Lapse_Rate",tlapchn(ich_diag(i))         )           ! stability index
                  call nc_diag_metadata_to_single("dTb_dTs",ts(ich_diag(i))               )           ! d(Tb)/d(Ts)
 

@@ -519,6 +519,7 @@ read_radarref_mosaic.f90
 read_radarref_mosaic_directDA.f90
 read_rapidscat.f90
 read_saphir.f90
+read_tms.f90
 read_satmar.f90
 read_satwnd.f90
 read_seviri.f90

@@ -342,6 +342,18 @@ subroutine read_obs_check (lexist,filename,jsatid,dtype,minuse,nread)
 !         kidsat = 288
        else if ( jsatid == 'meghat' ) then
          kidsat = 440
+       else if (jsatid == 'tropics-01') then
+         kidsat = 709
+       else if (jsatid == 'tropics-03') then
+         kidsat = 228
+       else if (jsatid == 'tropics-05') then
+         kidsat = 263
+       else if (jsatid == 'tropics-06') then
+         kidsat = 264
+       else if (jsatid == 'tropics-07') then
+         kidsat = 284
+       else
+         kidsat = 0
        end if
 
        call closbf(lnbufr)
@@ -952,7 +964,8 @@ subroutine read_obs(ndata,mype)
                obstype == 'mws'       .or.                              &
                obstype == 'cris'      .or. obstype == 'cris-fsr'  .or.  &
                obstype == 'amsr2'     .or. obstype == 'viirs-m'   .or.  obstype == 'metimage' .or. &
-               obstype == 'gmi'       .or. obstype == 'saphir'   ) then
+               obstype == 'gmi'       .or. obstype == 'saphir'    .or.  &
+               obstype == 'tms' ) then
           ditype(i) = 'rad'
        else if (is_extOzone(dfile(i),obstype,dplat(i))) then
           ditype(i) = 'ozone'
@@ -1770,6 +1783,13 @@ subroutine read_obs(ndata,mype)
                      nobs_sub1(1,i),dval_use)
                 string='READ_SAPHIR'
 
+!            Process tms data
+             else if (obstype == 'tms') then
+                call read_tms(mype,val_dat,ithin,isfcalc,rmesh,dplat(i),gstime,&
+                     infile,lunout,obstype,nread,npuse,nouse,twind,sis, &
+                     mype_root,mype_sub(mm1,i),npe_sub(i),mpi_comm_sub(i),  &
+                     nobs_sub1(1,i),dval_use)
+                string='READ_TMS'
 
 !            Process airs data        
              else if(dplat(i) == 'aqua' .and. (obstype == 'airs' .or.   &

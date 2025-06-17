@@ -98,6 +98,7 @@ module qcmod
 !   sub qc_amsua        - qc amsua data
 !   sub qc_mhs          - qc msu, amsub and hsb data
 !   sub qc_atms         - qc atms data
+!   sub qc_tms          - qc tropics data
 !   sub qc_gmi          - qc gmi data
 !   sub qc_amsr2        - qc amsr2 data
 !   sub qc_saphir       - qc saphir data
@@ -187,6 +188,7 @@ module qcmod
   public :: qc_gmi
   public :: qc_amsr2
   public :: qc_saphir
+  public :: qc_tms
 
 ! set passed variables to public
   public :: npres_print,nlnqc_iter,varqc_iter,pbot,ptop,c_varqc,njqc,vqc,nvqc,hub_norm
@@ -302,6 +304,10 @@ module qcmod
 ! QC_SAPHIR failures
 !  Reject due to krain type not equal to 0 in subroutine qc_saphir
   integer(i_kind),parameter:: ifail_krain_saphir_qc=50
+
+! QC_TMS failures
+!  Reject due to krain type not equal to 0 in subroutine qc_tms
+  integer(i_kind),parameter:: ifail_krain_tms_qc=50
 
 ! QC_IRSND        
 !  Reject because wavenumber > 2400 in subroutine qc_irsnd
@@ -4847,5 +4853,131 @@ subroutine qc_geocsr(nchanl,is,ndat,nsig,ich,sea,land,ice,snow,luse,   &
 
 end subroutine qc_geocsr
 
+subroutine qc_tms(nchanl,nsig,zsges,luse,sea, &
+     tbc, tsim, ptau5,emissivity,emissivity_k,varinv,aivals,id_qc,si, si2, si3, si4, si5,si6,si7,si8,si9,si10,si11,si12)
+!$$$ subprogram documentation block
+!               .      .    .
+! subprogram:  qc_tms     QC for TMS TBs
+!
+!   prgmmr: mjkim         org: jcsda            date: 2022-04-01
+!
+! abstract: set quality control criteria for TMS; check for rainy obs
+!
+! program history log:
+!     2022-04-01 mjkim
+!
+! input argument list:
+!     nchanl  - number of channels per obs
+!     zsges   - surface height (not use now)
+!     luse    - logical use flag
+!     sea     - logical, sea flag
+!     tms  - logical true if tms is processed
+!     ptau5
+!     tbc
+!     emissivity
+!     emissivity_k
+!
+! output argument list:
+!     varinv  - observation weight (modified obs var error inverse)
+!     aivals  - number of data not passing QC
+!     id_qc   - qc index - see qcmod definitions
+!
+! attributes:
+!     language: f90
+!     machine:  ibm RS/6000 SP
+!
+!$$$ end documentation block
+
+  use kinds, only: r_kind, i_kind
+  implicit none
+
+! Declare passed variables
+
+! Declare passed variables
+  integer(i_kind)                  ,intent(in   ) :: nchanl, nsig
+  integer(i_kind),dimension(nchanl),intent(inout) :: id_qc
+  logical                          ,intent(in   ) :: sea,luse
+
+  real(r_kind)                     ,intent(in   ) :: zsges
+  real(r_kind),dimension(nsig,nchanl),intent(in   ) :: ptau5
+  real(r_kind),dimension(nchanl),     intent(in   ) :: emissivity_k,tbc,emissivity,tsim
+
+  real(r_kind)   ,dimension(nchanl),intent(inout) :: varinv !,errf
+  real(r_kind)   ,dimension(40)    ,intent(inout) :: aivals
+  real(r_kind)                     ,intent(out) :: si,si2,si3,si4,si5,si6,si7,si8,si9,si10,si11,si12
+
+! Declare local variables
+  real(r_kind)    :: efact,vfact,fact
+  integer(i_kind) :: i
+!------------------------------------------------------------------
+
+! Loop over observations.
+
+  efact     =one
+  vfact     =one
+
+  do i=1, nchanl
+     if(tsim(i) .gt. 50.0_r_kind .and.  tsim(i) .le. 400.0_r_kind)  then
+       if(emissivity(i) .gt. one .or. emissivity(i) .le. zero)  then
+         varinv(i) = zero
+         if(id_qc(i) == igood_qc)id_qc(i)=ifail_crtm_qc
+       endif
+     else
+       varinv(i) = zero
+       if(id_qc(i) == igood_qc)id_qc(i)=ifail_crtm_qc
+     endif
+  enddo
+
+  if(varinv(11) > zero) then
+    si =  tbc(1)-tbc(11)
+    si2 =  tbc(1)-tbc(2)
+    si3 =  tbc(1)-tbc(3)
+    si4 =  tbc(1)-tbc(4)
+    si5 =  tbc(1)-tbc(5)
+    si6 =  tbc(1)-tbc(6)
+    si7 =  tbc(1)-tbc(7)
+    si8 =  tbc(1)-tbc(8)
+    si9 =  tbc(1)-tbc(9)
+    si10 =  tbc(1)-tbc(10)
+    si11 =  tbc(1)-tbc(11)
+    si12 =  tbc(1)-tbc(12)
+  endif
+
+  if(.not. sea) then
+     do i=1, nchanl
+        if(emissivity_k(i) .gt. 1.0_r_kind) then
+            varinv(i) = zero
+            if(id_qc(i) == igood_qc)id_qc(i)=ifail_emiss_qc
+        endif
+        if(si > 10.0_r_kind) then
+            varinv(i) = zero
+            if(id_qc(i) == igood_qc)id_qc(i)=ifail_fact1_qc
+        endif
+     enddo
+  else
+     do i=1, nchanl
+        if(si > 10.0_r_kind) then
+            varinv(i) = zero
+            if(id_qc(i) == igood_qc)id_qc(i)=ifail_fact1_qc
+        endif
+     enddo
+  endif
+
+!   Reduce q.c. bounds over higher topography
+  if ( zsges> r2000) then
+        do i=1,nchanl
+           varinv(i) = zero
+           if(id_qc(i) == igood_qc ) id_qc(i)=ifail_terrain_qc
+        enddo
+  end if
+
+
+! Generate q.c. bounds and modified variances.
+!  do i=1,nchanl
+!     varinv(i)=vfact*varinv(i)*ptau5(nsig,i)
+!  end do
+
+  return
+end subroutine qc_tms
 
 end module qcmod

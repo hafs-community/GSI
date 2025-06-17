@@ -324,6 +324,7 @@ function dtype2index_(dtype) result(index_)
         !
     case("atms"   ); index_= iobOper_rad
     case("saphir" ); index_= iobOper_rad
+    case("tms"    ); index_= iobOper_rad
         !
     case("airs"   ); index_= iobOper_rad
     case("hsb"    ); index_= iobOper_rad
