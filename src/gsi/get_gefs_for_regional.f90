@@ -1075,7 +1075,7 @@ subroutine get_gefs_for_regional
      end do
   end do
   deallocate(stbar,vpbar,rhbar,ozbar,cwbar)
-  if(allocated(qbar)) deallocate(qbar)
+  deallocate(qbar)
 
 ! now obtain mean pressure prsl
 ! compute 3d pressure on interfaces
@@ -1548,8 +1548,8 @@ subroutine get_gefs_for_regional
   deallocate(xspli,yspli,xsplo,ysplo)
   deallocate(prsl)
   deallocate(ut,vt,tt,rht,ozt,cwt)
-  if(allocated(q_eg)) deallocate(q_eg)
-  if(allocated(qt)) deallocate(qt)
+  deallocate(q_eg)
+  deallocate(qt)
 
   enddo ! it=1,ntlevs_ens
   return
