@@ -1379,7 +1379,7 @@ subroutine get_gefs_for_regional
 !                                                  end if
      ! save q ensemble perturbation for analysis time
      if (write_obs_sprd) then
-        if ((ntlevs_ens>1) .and. (it==2)) then
+        if ((ntlevs_ens==1) .or. (it==ntguessig)) then
           do k=1, grd_ens%nsig
             do j=1, grd_ens%lon2
               do i=1, grd_ens%lat2
@@ -1390,18 +1390,7 @@ subroutine get_gefs_for_regional
               end do
             end do
           end do
-        else
-          do k=1, grd_ens%nsig
-            do j=1, grd_ens%lon2
-              do i=1, grd_ens%lat2
-                q_perts(i,j,k,n)=qt(i,j,k)*sig_norm
-                t_perts(i,j,k,n)=tt(i,j,k)*sig_norm
-                u_perts(i,j,k,n)=ut(i,j,k)*sig_norm
-                v_perts(i,j,k,n)=vt(i,j,k)*sig_norm
-              end do
-            end do
-          end do
-        endif
+        end if
      endif
 
      do ic3=1,nc3d
