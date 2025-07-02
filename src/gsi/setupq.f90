@@ -181,6 +181,11 @@ subroutine setupq(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
   use state_vectors, only: svars3d, levels
   use hdraobmod, only: nhdq,hdqlist
 
+  ! added by Dan Wu for output ensemble spread at obs space
+  use hybrid_ensemble_parameters, only: q_perts
+  use hybrid_ensemble_parameters, only: n_ens
+  use hybrid_ensemble_parameters, only: write_obs_sprd
+
   ! The following variables are the coefficients that describe the
   ! linear regression fits that are used to define the dynamic
   ! observation error (DOE) specifications for all reconnissance
@@ -242,6 +247,10 @@ subroutine setupq(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
   real(r_single),allocatable,dimension(:,:)::rdiagbuf
   real(r_single),allocatable,dimension(:,:)::rdiagbufp
 
+  real(r_kind), allocatable, dimension(:,:,:,:) :: suba_q
+  real(r_kind) sp_norm,sig_norm_sq_inv
+  real(r_kind) q_ensprd
+  integer(i_kind) nx, ny, nz, n
 
   integer(i_kind) i,j,nchar,nreal,ii,l,jj,mm1,itemp,iip
   integer(i_kind) jsig,itype,k,nn,ikxx,iptrb,ibin,ioff,ioff0,icat,ijb
@@ -310,6 +319,38 @@ subroutine setupq(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
 
 ! If require guess vars available, extract from bundle ...
   call init_vars_
+
+!*********************************************************************************
+! get ensemble spread in model space at the first loop
+  if (write_obs_sprd .and. (jiter == jiterstart)) then
+
+    nx = size(q_perts,1)
+    ny = size(q_perts,2)
+    nz = size(q_perts,3)
+  !  write(6,*) 'nx, ny, nz:', nx, ny, nz
+  !  write(6,*) 'q_perts(nx,ny,nz,1): ', q_perts(nx,ny,nz,1)
+
+    allocate(suba_q(nx, ny, nz, 1))
+    suba_q = zero
+
+    ! calculate the ensemble spread of the selected variable at model space
+     sp_norm=one/real(n_ens, r_kind)
+     sig_norm_sq_inv = n_ens-one
+
+     do n=1,n_ens
+         do k=1,nz
+            do j=1,ny
+              do i=1,nx
+                 suba_q(i,j,k,1) = suba_q(i,j,k,1) + q_perts(i,j,k,n)*q_perts(i,j,k,n)
+              enddo
+            enddo
+         end do
+     end do
+
+     suba_q = sqrt(sp_norm*sig_norm_sq_inv*suba_q)
+
+  endif ! end of calculating ensemble spread at the first loop
+
 
 !*******************************************************************************
 ! Read and reformat observations in work arrays.
@@ -615,6 +656,12 @@ subroutine setupq(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
         !update the station elevation
         data(istnelv,i) = data(izz,i)
 
+     endif
+
+     ! interpolate the ensemble spread to the obs data location
+     if (write_obs_sprd .and. (jiter == jiterstart)) then
+       call tintrp31(suba_q,q_ensprd,dlat,dlon,dpres,dtime, &
+                3,mype,1)
      endif
 
      ddiff=qob-qges 
@@ -1409,6 +1456,12 @@ subroutine setupq(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
               call nc_diag_metadata_to_single("Observation_Tdry", data(itemp,i)    )
               call nc_diag_metadata_to_single("Setup_QC_Mark",    data(iqt,  i)    )
            endif
+
+! add the ensemble spread at obs location for the first loop
+           if (write_obs_sprd .and. (jiter == jiterstart)) then
+                call nc_diag_metadata_to_single("Ensemble_Spread",q_ensprd)
+           endif
+           
            if (lobsdiagsave) then
               do jj=1,miter
                  if (odiag%muse(jj)) then
@@ -1515,6 +1568,7 @@ subroutine setupq(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsav
     if(allocated(ges_t2m)) deallocate(ges_t2m)
     if(allocated(ges_q )) deallocate(ges_q )
     if(allocated(ges_ps)) deallocate(ges_ps)
+    if(allocated(suba_q)) deallocate(suba_q)
   end subroutine final_vars_
 
 end subroutine setupq

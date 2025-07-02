@@ -318,7 +318,8 @@ module hybrid_ensemble_parameters
   public :: merge_two_grid_ensperts
   public :: regional_ensemble_option
   public :: fv3sar_ensemble_opt 
-  
+ 
+  public :: write_obs_sprd 
   public :: write_ens_sprd
   public :: nval_lenz_en
   public :: ntlevs_ens
@@ -342,6 +343,7 @@ module hybrid_ensemble_parameters
   public :: l_both_fv3sar_gfs_ens 
   public :: sst_staticB
   public :: limqens
+  public :: q_perts, t_perts, u_perts, v_perts
 
   public :: spc_multwgt
   public :: spcwgt_params
@@ -358,6 +360,7 @@ module hybrid_ensemble_parameters
   logical dual_res
   logical pseudo_hybens
   logical merge_two_grid_ensperts
+  logical write_obs_sprd
   logical write_ens_sprd
   logical readin_localization
   logical readin_beta
@@ -424,6 +427,7 @@ module hybrid_ensemble_parameters
 
   integer(i_kind) nelen
   type(gsi_bundle),save,allocatable :: en_perts(:,:,:)
+  real(r_single),dimension(:,:,:,:), allocatable:: q_perts, t_perts, u_perts, v_perts
   real(r_single),dimension(:,:,:),allocatable:: ps_bar
   real(r_single):: limqens
 
@@ -480,6 +484,7 @@ subroutine init_hybrid_ensemble_parameters
   regional_ensemble_option=0
   fv3sar_ensemble_opt=0
   write_ens_sprd=.false.
+  write_obs_sprd=.false.
   readin_localization=.false.
   readin_beta=.false.
   use_localization_grid=.false.
