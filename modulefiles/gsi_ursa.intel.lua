@@ -17,6 +17,10 @@ load(pathJoin("cmake", cmake_ver))
 
 load("gsi_common")
 
+setenv("CMAKE_C_COMPILER", "mpiicx")
+setenv("CMAKE_CXX_COMPILER", "mpiicpx")
+setenv("CMAKE_Fortran_COMPILER", "mpiifort")
+
 pushenv("GSI_BINARY_SOURCE_DIR", "/scratch3/NCEPDEV/global/role.glopara/fix/gsi/20250430")
 
 whatis("Description: GSI environment on Ursa with Intel Compilers")

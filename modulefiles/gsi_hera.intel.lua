@@ -23,6 +23,10 @@ load("impi/2022.1.2")
 pushenv("CFLAGS", "-xHOST")
 pushenv("FFLAGS", "-xHOST")
 
+setenv("CMAKE_C_COMPILER", "mpiicx")
+setenv("CMAKE_CXX_COMPILER", "mpiicpx")
+setenv("CMAKE_Fortran_COMPILER", "mpiifort")
+
 pushenv("GSI_BINARY_SOURCE_DIR", "/scratch1/NCEPDEV/global/glopara/fix/gsi/20241022")
 
 whatis("Description: GSI environment on Hera with Intel Compilers")

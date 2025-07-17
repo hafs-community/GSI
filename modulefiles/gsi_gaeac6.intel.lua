@@ -17,9 +17,9 @@ load("gsi_common")
 
 pushenv("GSI_BINARY_SOURCE_DIR", "/gpfs/f6/bil-fire8/world-shared/GSI_data/fix/gsi/20241022")
 
-setenv("CC","cc")
-setenv("FC","ftn")
-setenv("CXX","CC")
+setenv("CMAKE_C_COMPILER","cc")
+setenv("CMAKE_Fortran_COMPILER","ftn")
+setenv("CMAKE_CXX_COMPILER","CC")
 pushenv("CRAYPE_LINK_TYPE","dynamic")
 
 unload("cray-libsci")
