@@ -425,7 +425,9 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
            if (obsbul(1,1) == 'URPN15') obs_region = 'East and Central Pacific' 
            if (obsbul(1,1) == 'URPA15') obs_region = 'West Pacific' 
 
-           c_station_id = 'FL_HDOB'
+!           c_station_id = 'FL_HDOB'
+           c_station_id = obsbul(2,1) !Store the BORG as station id to separate the data source
+
            c_prvstg     = obsbul(2,1) 
            c_sprvstg    = obsbul(1,1) 
 
@@ -472,7 +474,12 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
 !                 3  both lat/lon abd GA/PS questionable
 
            call ufbint(lunin,obsqcm,2,1,nlv,qcmstr)
+           if (trim(obsbul(2,1)) == 'KUAS') then
+             obsqcm(1,1)=64 !Temp Fix for KUAS
+             obsqcm(2,1)=64 !Temp Fix for KUAS
+           end if
            call upftbv(lunin,"QHDOP",obsqcm(1,1),mxib,ibit,nib)
+
            if (nib > 0) then  
                ibit(1:nib) = ibit(1:nib)-1
                if (any(ibit(1:nib) > 0)) then
