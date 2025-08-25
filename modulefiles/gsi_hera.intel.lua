@@ -1,29 +1,31 @@
 help([[
 ]])
 
-prepend_path("MODULEPATH", "/contrib/spack-stack/spack-stack-1.6.0/envs/unified-env-rocky8/install/modulefiles/Core")
+prepend_path("MODULEPATH", "/contrib/spack-stack/spack-stack-1.9.2/envs/ue-oneapi-2024.2.1/install/modulefiles/Core")
 
-local python_ver=os.getenv("python_ver") or "3.11.6"
-local stack_intel_ver=os.getenv("stack_intel_ver") or "2021.5.0"
-local stack_impi_ver=os.getenv("stack_impi_ver") or "2021.5.1"
-local cmake_ver=os.getenv("cmake_ver") or "3.23.1"
-local prod_util_ver=os.getenv("prod_util_ver") or "2.1.1"
+local stack_oneapi_ver=os.getenv("stack_oneapi_ver") or "2024.2.1"
+local stack_intel_oneapi_mpi_ver=os.getenv("stack_intel_oneapi_mpi_ver") or "2021.13"
+local mkl_ver=os.getenv("mkl_ver") or "2024.2.1"
+local stack_python_ver=os.getenv("stack_python_ver") or "3.11.7"
+local cmake_ver=os.getenv("cmake_ver") or "3.27.9"
 
-load(pathJoin("stack-intel", stack_intel_ver))
-load(pathJoin("stack-intel-oneapi-mpi", stack_impi_ver))
-load(pathJoin("python", python_ver))
+load(pathJoin("stack-oneapi", stack_oneapi_ver))
+load(pathJoin("stack-intel-oneapi-mpi", stack_intel_oneapi_mpi_ver))
+load(pathJoin("mkl", mkl_ver))
+load(pathJoin("stack-python", stack_python_ver))
 load(pathJoin("cmake", cmake_ver))
 
 load("gsi_common")
-load(pathJoin("prod_util", prod_util_ver))
+
+unload("impi/2024.2.1")
+load("impi/2022.1.2")
 
 pushenv("CFLAGS", "-xHOST")
 pushenv("FFLAGS", "-xHOST")
 
-setenv("CMAKE_C_COMPILER", "mpiicc")
-setenv("CMAKE_CXX_COMPILER", "mpiicpc")
+setenv("CMAKE_C_COMPILER", "mpiicx")
+setenv("CMAKE_CXX_COMPILER", "mpiicpx")
 setenv("CMAKE_Fortran_COMPILER", "mpiifort")
-setenv("CMAKE_Platform", "hera.intel")
 
 pushenv("GSI_BINARY_SOURCE_DIR", "/scratch1/NCEPDEV/global/glopara/fix/gsi/20241022")
 
