@@ -39,6 +39,8 @@ CMAKE_OPTS+=" -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX"
 # Configure for GSI and EnKF
 CMAKE_OPTS+=" -DGSI_MODE=$GSI_MODE -DENKF_MODE=${ENKF_MODE}"
 
+# Compiler specification
+CMAKE_OPTS+=" -DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER} -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}"
 # Build regression test suite (on supported MACHINE_ID where CONTROLPATH exists)
 [[ ${REGRESSION_TESTS} =~ [yYtT] ]] && CMAKE_OPTS+=" -DBUILD_REG_TESTING=ON -DCONTROLPATH=${CONTROLPATH:-}"
 
@@ -48,6 +50,7 @@ mkdir -p $BUILD_DIR && cd $BUILD_DIR
 
 # Configure, build, install
 cmake $CMAKE_OPTS $DIR_ROOT
+BUILD_VERBOSE=2
 make -j ${BUILD_JOBS:-8} VERBOSE=${BUILD_VERBOSE:-}
 make install
 

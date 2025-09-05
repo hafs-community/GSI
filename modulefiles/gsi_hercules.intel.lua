@@ -1,7 +1,7 @@
 help([[
 ]])
 
-prepend_path("MODULEPATH", "/work/noaa/epic/role-epic/spack-stack/hercules/spack-stack-1.6.0/envs/gsi-addon-env/install/modulefiles/Core")
+prepend_path("MODULEPATH", "/work/noaa/epic/role-epic/spack-stack/hercules/spack-stack-1.6.0/envs/unified-env/install/modulefiles/Core")
 
 local stack_python_ver=os.getenv("stack_python_ver") or "3.11.6"
 local stack_intel_ver=os.getenv("stack_intel_ver") or "2021.9.0"
@@ -22,5 +22,9 @@ pushenv("CFLAGS", "-xHOST")
 pushenv("FFLAGS", "-xHOST")
 
 pushenv("GSI_BINARY_SOURCE_DIR", "/work2/noaa/global/role-global/fix/gsi/20241022")
+
+setenv("CMAKE_C_COMPILER", "mpiicc")
+setenv("CMAKE_CXX_COMPILER", "mpiicpc")
+setenv("CMAKE_Fortran_COMPILER", "mpiifort")
 
 whatis("Description: GSI environment on Hercules with Intel Compilers")
