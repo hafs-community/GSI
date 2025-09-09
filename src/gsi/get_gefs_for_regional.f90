@@ -43,7 +43,7 @@ subroutine get_gefs_for_regional
   use hybrid_ensemble_parameters, only: en_perts,ps_bar,nelen
   use hybrid_ensemble_parameters, only: q_perts, t_perts, u_perts, v_perts
   use hybrid_ensemble_parameters, only: write_obs_sprd
-  use hybrid_ensemble_parameters, only: n_ens_gfs,weight_ens_gfs,grd_ens,grd_a1,grd_e1,p_e2a,uv_hyb_ens,dual_res
+  use hybrid_ensemble_parameters, only: n_ens_gfs,weight_ens_gfs,grd_ens,grd_a1,grd_e1,p_e2a,uv_hyb_ens,dual_res, n_ens
   use hybrid_ensemble_parameters, only: full_ensemble,q_hyb_ens,l_ens_in_diff_time,write_ens_sprd
   use hybrid_ensemble_parameters, only: ntlevs_ens,ensemble_path,jcap_ens
   use control_vectors, only: cvars2d,cvars3d,nc2d,nc3d
@@ -1154,6 +1154,13 @@ subroutine get_gefs_for_regional
   allocate(cwt(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig))
   allocate(qt(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig))
 
+  if (write_obs_sprd .and. it==ntguessig) then
+    allocate(q_perts(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig,n_ens))
+    allocate(t_perts(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig,n_ens))
+    allocate(u_perts(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig,n_ens))
+    allocate(v_perts(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig,n_ens))
+  endif
+
   do n=1,n_ens_gfs
      do j=1,grd_ens%lon2
         do i=1,grd_ens%lat2
@@ -1258,8 +1265,8 @@ subroutine get_gefs_for_regional
               qt(i,j,k)=ysplo(k)
            end do           
 
-        end do
-     end do
+        end do ! grd_ens%lat2
+     end do   ! grd_ens%lon2
 
 !wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
      if(n==1 .and. full_ensemble)then
@@ -1345,7 +1352,7 @@ subroutine get_gefs_for_regional
                  p_eg_nmmb(i,j,n) = p_eg_nmmb(i,j,n)-ges_ps(i,j)
               end do
            end do
-        endif
+        endif ! dual_res
         deallocate(qs)
 
      endif   ! n==1 .and. full_ensemble
@@ -1378,20 +1385,23 @@ subroutine get_gefs_for_regional
 !!                                                      call grads1a(cwt,grd_ens%nsig,mype,trim(fname))
 !                                                  end if
      ! save q ensemble perturbation for analysis time
-     if (write_obs_sprd) then
-        if ((ntlevs_ens==1) .or. (it==ntguessig)) then
-          do k=1, grd_ens%nsig
-            do j=1, grd_ens%lon2
-              do i=1, grd_ens%lat2
-                q_perts(i,j,k,n)=qt(i,j,k)*sig_norm
-                t_perts(i,j,k,n)=tt(i,j,k)*sig_norm
-                u_perts(i,j,k,n)=ut(i,j,k)*sig_norm
-                v_perts(i,j,k,n)=vt(i,j,k)*sig_norm
+     if (write_obs_sprd .and. it==ntguessig) then
+          if (dual_res) then
+            write(6,*) 'not ready for GDAD ensemble dual_res yet'    
+            call stop2(999)
+          else          
+            do k=1, grd_ens%nsig
+              do j=1, grd_ens%lon2
+                do i=1, grd_ens%lat2
+                  q_perts(i,j,k,n)=qt(i,j,k)*sig_norm
+                  t_perts(i,j,k,n)=tt(i,j,k)*sig_norm
+                  u_perts(i,j,k,n)=ut(i,j,k)*sig_norm
+                  v_perts(i,j,k,n)=vt(i,j,k)*sig_norm
+                end do
               end do
             end do
-          end do
-        end if
-     endif
+          end if ! dual_res
+     end if ! write_obs_sprd & ntguessig       
 
      do ic3=1,nc3d
 
@@ -1481,7 +1491,7 @@ subroutine get_gefs_for_regional
               endif
 
         end select
-     end do
+     end do  ! ic3
      do ic2=1,nc2d
 
         if(ntlevs_ens > 1) then
@@ -1514,8 +1524,8 @@ subroutine get_gefs_for_regional
               end do
 
         end select
-     end do
-  end do
+     end do ! ic2
+  end do  ! n_ens_gfs
 
   call general_sub2grid_destroy_info(grd_gfs)
   call general_sub2grid_destroy_info(grd_mix)
