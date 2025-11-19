@@ -52,9 +52,11 @@ contains
      use kinds, only: r_kind,i_kind,r_single
      use constants, only: zero,one,half,zero_single,rd_over_cp,one_tenth
      use mpimod, only: mpi_comm_world,ierror,mype,npe
-     use hybrid_ensemble_parameters, only: n_ens,grd_ens,parallelization_over_ensmembers
+     use hybrid_ensemble_parameters, only: n_ens,grd_ens,grd_anl,parallelization_over_ensmembers
      use hybrid_ensemble_parameters, only: l_both_fv3sar_gfs_ens,n_ens_gfs,n_ens_fv3sar,weight_ens_fv3sar
      use hybrid_ensemble_parameters, only: ntlevs_ens,ensemble_path
+     use hybrid_ensemble_parameters, only: q_perts, t_perts, u_perts, v_perts
+     use hybrid_ensemble_parameters, only: write_obs_sprd, dual_res
      use control_vectors, only: cvars2d,cvars3d,nc2d,nc3d
      use gsi_bundlemod, only: gsi_bundlecreate
      use gsi_bundlemod, only: gsi_grid
@@ -64,7 +66,7 @@ contains
      use gsi_bundlemod, only: gsi_gridcreate
      use gsi_4dvar, only: ens_fhrlevs
      use gsi_rfv3io_mod, only: type_fv3regfilenameg
-     use hybrid_ensemble_parameters, only: write_ens_sprd
+     use hybrid_ensemble_parameters, only: write_ens_sprd, p_e2a
      use directDA_radaruse_mod, only: l_use_cvpqx, cvpqx_pval, cld_nt_updt
      use directDA_radaruse_mod, only: l_use_dbz_directDA
      use directDA_radaruse_mod, only: l_cvpnr
@@ -76,28 +78,32 @@ contains
      use netcdf_mod , only: nc_check
      use gsi_rfv3io_mod, only: fv3lam_io_phymetvars3d_nouv
      use obsmod, only: if_model_dbz,if_model_fed
-    
+     use guess_grids, only: ntguessig
+     use general_sub2grid_mod, only: general_sube2suba
 
      implicit none
      class(get_fv3_regional_ensperts_class), intent(inout) :: this
      type(gsi_bundle),allocatable, intent(inout) :: en_perts(:,:,:)
+     type(gsi_bundle) :: work_ens, work_anl
      integer(i_kind), intent(in   ):: nelen
      real(r_single),dimension(:,:,:),allocatable,intent(inout):: ps_bar
  
-     real(r_kind),dimension(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig):: u,v,tv,oz,rh
+     real(r_kind),dimension(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig):: u,v,tv,oz,q,rh
      real(r_kind),dimension(grd_ens%lat2,grd_ens%lon2):: ps
      real(r_kind),dimension(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig)::w,ql,qi,qr,qg,qs,qnr,dbz,fed
      real(r_kind),dimension(:,:,:),allocatable :: gg_u,gg_v,gg_tv,gg_rh
      real(r_kind),dimension(:,:,:),allocatable :: gg_w,gg_dbz,gg_qr,gg_qs, &
                                                   gg_qi,gg_qg,gg_oz,gg_cwmr,gg_fed
      real(r_kind),dimension(:,:),allocatable :: gg_ps
- 
+     real(r_kind),dimension(:,:,:,:),allocatable :: q_sub
+     real(r_kind),allocatable,dimension(:,:,:)::qbar
+
      real(r_single),pointer,dimension(:,:,:):: w3 =>NULL()
      real(r_single),pointer,dimension(:,:):: w2 =>NULL()
      real(r_kind),pointer,dimension(:,:,:):: x3 =>NULL()
      real(r_kind),pointer,dimension(:,:):: x2 =>NULL()
      type(gsi_bundle),allocatable,dimension(:):: en_bar
-     type(gsi_grid):: grid_ens
+     type(gsi_grid):: grid_ens, grid_anl
      real(r_kind):: bar_norm,sig_norm,kapr,kap1
 
      character(len=64),dimension(:,:),allocatable:: names
@@ -120,6 +126,7 @@ contains
 
      integer(i_kind):: i_caseflag
 
+
      if(n_ens/=(n_ens_gfs+n_ens_fv3sar)) then
         write(6,*)'wrong, the sum of  n_ens_gfs and n_ens_fv3sar not equal n_ens, stop'
         write(6,*)"n_ens, n_ens_gfs and n_ens_fv3sar are",n_ens, n_ens_gfs , n_ens_fv3sar
@@ -132,6 +139,7 @@ contains
      endif
 
      call gsi_gridcreate(grid_ens,grd_ens%lat2,grd_ens%lon2,grd_ens%nsig)
+     call gsi_gridcreate(grid_anl,grd_anl%lat2,grd_anl%lon2,grd_anl%nsig)
      ! Allocate bundle to hold mean of ensemble members
      allocate(en_bar(ntlevs_ens))
 
@@ -228,9 +236,6 @@ contains
          grd_ens%nlon,grd_ens%nsig,numfields,regional,names=names,lnames=lnames)
 
 
-
-
-
     numfields=grd_ens%nsig
     inner_vars=2
     allocate(uvlnames(inner_vars,numfields),uvnames(inner_vars,numfields))
@@ -275,10 +280,11 @@ contains
        end if
     end if
 
-
+    allocate(qbar(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig))
+    allocate(q_sub(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig,n_ens))
     do m=1,ntlevs_ens
 
-
+       qbar=zero
 
  !
  ! INITIALIZE ENSEMBLE MEAN ACCUMULATORS
@@ -455,21 +461,21 @@ contains
           
               select case (i_caseflag)
                 case (0)
-                  call this%general_read_fv3_regional(fv3_filename,ps,u,v,tv,rh,oz)
+                  call this%general_read_fv3_regional(fv3_filename,ps,u,v,tv,q,rh,oz)
                 case (1)
-                  call this%general_read_fv3_regional(fv3_filename,ps,u,v,tv,rh,oz,   &
+                  call this%general_read_fv3_regional(fv3_filename,ps,u,v,tv,q,rh,oz,   &
                             g_ql=ql,g_qi=qi,g_qr=qr,g_qs=qs,g_qg=qg,g_qnr=qnr,g_w=w)
                 case (2)
-                  call this%general_read_fv3_regional(fv3_filename,ps,u,v,tv,rh,oz,   &
+                  call this%general_read_fv3_regional(fv3_filename,ps,u,v,tv,q,rh,oz,   &
                             g_ql=ql,g_qi=qi,g_qr=qr,g_qs=qs,g_qg=qg,g_qnr=qnr,g_w=w,g_dbz=dbz)
                 case (3)
-                  call this%general_read_fv3_regional(fv3_filename,ps,u,v,tv,rh,oz,   &
+                  call this%general_read_fv3_regional(fv3_filename,ps,u,v,tv,q,rh,oz,   &
                             g_ql=ql,g_qi=qi,g_qr=qr,g_qs=qs,g_qg=qg,g_w=w,g_fed=fed)
                 case (4)
-                  call this%general_read_fv3_regional(fv3_filename,ps,u,v,tv,rh,oz,   &
+                  call this%general_read_fv3_regional(fv3_filename,ps,u,v,tv,q,rh,oz,   &
                             g_ql=ql,g_qi=qi,g_qr=qr,g_qs=qs,g_qg=qg,g_qnr=qnr,g_w=w,g_fed=fed)
                 case (5)
-                  call this%general_read_fv3_regional(fv3_filename,ps,u,v,tv,rh,oz,   &
+                  call this%general_read_fv3_regional(fv3_filename,ps,u,v,tv,q,rh,oz,   &
                             g_ql=ql,g_qi=qi,g_qr=qr,g_qs=qs,g_qg=qg,g_qnr=qnr,g_w=w,g_dbz=dbz,g_fed=fed)
               end select
            end if
@@ -535,9 +541,19 @@ contains
               call MPI_Barrier(mpi_comm_world,ierror)
            end if
 
+           if (m==ntguessig) then
+              do k=1,grd_ens%nsig
+                 do i=1,grd_ens%lon2
+                    do j=1,grd_ens%lat2
+                       q_sub(j,i,k,n) = q(j,i,k)
+                       qbar(j,i,k) = qbar(j,i,k)+q(j,i,k)
+                    enddo
+                  enddo
+               enddo
+           endif
+
  ! SAVE ENSEMBLE MEMBER DATA IN COLUMN VECTOR
            do ic3=1,nc3d
- 
               call gsi_bundlegetpointer(en_perts(n,1,m),trim(cvars3d(ic3)),w3,istatus)
               if(istatus/=0) then
                  write(6,*)' error retrieving pointer to ',trim(cvars3d(ic3)),' for ensemble member ',n
@@ -717,7 +733,6 @@ contains
            end do
  
            do ic2=1,nc2d
-    
               call gsi_bundlegetpointer(en_perts(n,1,m),trim(cvars2d(ic2)),w2,istatus)
               if(istatus/=0) then
                  write(6,*)' error retrieving pointer to ',trim(cvars2d(ic2)),' for ensemble member ',n
@@ -752,12 +767,13 @@ contains
  
               end select
            end do
-        enddo 
+        enddo   ! for n 
  !
  ! CALCULATE ENSEMBLE MEAN
         bar_norm = one/real(n_ens_fv3sar,r_kind)
         en_bar(m)%values=en_bar(m)%values*bar_norm
- 
+        qbar = qbar*bar_norm 
+
  ! Copy pbar to module array.  ps_bar may be needed for vertical localization
  ! in terms of scale heights/normalized p/p
         do ic2=1,nc2d
@@ -791,7 +807,106 @@ contains
            end do
         end do
 
+        ! save ensemble spread in anl grid into global variable *_perts
+        if (write_obs_sprd) then
+           if (m==ntguessig) then
+
+              allocate(q_perts(grd_anl%lat2,grd_anl%lon2,grd_anl%nsig,n_ens))
+              allocate(t_perts(grd_anl%lat2,grd_anl%lon2,grd_anl%nsig,n_ens))
+              allocate(u_perts(grd_anl%lat2,grd_anl%lon2,grd_anl%nsig,n_ens))
+              allocate(v_perts(grd_anl%lat2,grd_anl%lon2,grd_anl%nsig,n_ens))
+              
+               ! calculate perturbation of q
+               do n=imem_start, n_ens
+                  do k=1,grd_ens%nsig
+                     do i=1,grd_ens%lon2
+                        do j=1,grd_ens%lat2
+                           q_sub(j,i,k,n) = (q_sub(j,i,k,n) - qbar(j,i,k))*sig_norm
+                        enddo
+                     enddo
+                  enddo
+               enddo
+
+              if (dual_res) then
+                 call gsi_bundlecreate(work_ens,grid_ens,'ensemble work',istatus, &
+                              names2d=cvars2d,names3d=cvars3d,bundle_kind=r_kind)
+                 if(istatus/=0) then
+                   write(6,*) 'in get_fv3_regional_ensperts_run: trouble creating work_ens bundle'
+                   call stop2(999)
+                 endif
+        
+                 call gsi_bundlecreate(work_anl,grid_anl,'analysis work',istatus, &
+                              names2d=cvars2d,names3d=cvars3d,bundle_kind=r_kind)
+                 if(istatus/=0) then
+                   write(6,*) 'in get_fv3_regional_ensperts_run: trouble creating work_anl bundle'
+                   call stop2(999)
+                 endif                      
+
+                 do n=imem_start, n_ens
+                    work_anl%values=zero
+                    work_ens%values=zero
+                    do i=1,nelen
+                       work_ens%values(i)=en_perts(n,1,m)%valuesr4(i)
+                    enddo
+
+                    ! replace rh perturbation with q_sub
+                    call gsi_bundlegetpointer(work_ens,'q',x3,istatus)
+                    if(istatus/=0) then
+                       if(mype==0) write(6,*)' error retrieving pointer to q for work_ens'
+                       call stop2(999)
+                    end if
+                    do k=1,grd_ens%nsig
+                       do i=1,grd_ens%lon2
+                          do j=1,grd_ens%lat2
+                             x3(j,i,k) = q_sub(j,i,k,n)
+                          end do
+                       end do
+                    end do               
+
+                    ! interpolation from ens_grid to anl_grid
+                    call general_sube2suba(grd_ens,grd_anl,p_e2a,work_ens%values,work_anl%values,regional)
+
+                    call gsi_bundlegetpointer(work_anl,'t',x3,istatus)
+                    t_perts(:,:,:,n) = x3
+                    call gsi_bundlegetpointer(work_anl,'sf',x3,istatus)
+                    u_perts(:,:,:,n) = x3
+                    call gsi_bundlegetpointer(work_anl,'vp',x3,istatus)
+                    v_perts(:,:,:,n) = x3
+                    call gsi_bundlegetpointer(work_anl,'q',x3,istatus)
+                    q_perts(:,:,:,n) = x3
+                 enddo
+
+                 call gsi_bundledestroy(work_anl,istatus)
+                 if(istatus/=0) then
+                   write(6,*) 'in get_fv3_regional_ensperts_run: trouble destroying work anl bundle'
+                   call stop2(999)
+                 endif
+                 call gsi_bundledestroy(work_ens,istatus)
+                 if(istatus/=0) then
+                   write(6,*) 'in get_fv3_regional_ensperts_run: trouble destroying work anl bundle'
+                   call stop2(999)
+                 endif               
+              else
+                 do n=imem_start, n_ens
+
+                    call gsi_bundlegetpointer(en_perts(n,1,m),'t',w3,istatus)
+                    t_perts(:,:,:,n) = w3
+                    call gsi_bundlegetpointer(en_perts(n,1,m),'sf',w3,istatus)
+                    u_perts(:,:,:,n) = w3
+                    call gsi_bundlegetpointer(en_perts(n,1,m),'vp',w3,istatus)
+                    v_perts(:,:,:,n) = w3
+                   
+                 enddo                
+                 q_perts = q_sub
+
+              endif ! dual_res
+
+          endif ! m==ntguessig
+        endif  ! write_obs_sprd
+
+
     enddo ! it 4d loop
+    
  ! CALCULATE ENSEMBLE SPREAD
     if(write_ens_sprd ) then
         call this%ens_spread_dualres_regional(mype,en_perts,nelen)
@@ -806,6 +921,8 @@ contains
     end do
 
     deallocate(en_bar)
+    deallocate(qbar)
+    deallocate(q_sub)
   !
   
    return
@@ -817,7 +934,7 @@ contains
 
   end subroutine get_fv3_regional_ensperts_run
   
-  subroutine general_read_fv3_regional(this,fv3_filenameginput,g_ps,g_u,g_v,g_tv,g_rh,g_oz, &
+  subroutine general_read_fv3_regional(this,fv3_filenameginput,g_ps,g_u,g_v,g_tv,g_q,g_rh,g_oz, &
                                         g_ql,g_qi,g_qr,g_qs,g_qg,g_qnr,g_w,g_dbz,g_fed)
   !$$$  subprogram documentation block
   !     first compied from general_read_arw_regional           .      .    .                                       .
@@ -877,13 +994,13 @@ contains
 ! Declare passed variables
     class(get_fv3_regional_ensperts_class), intent(inout) :: this
     type (type_fv3regfilenameg)                  , intent (in)   :: fv3_filenameginput
-    real(r_kind),dimension(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig),intent(out)::g_u,g_v,g_tv,g_rh,g_oz
+    real(r_kind),dimension(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig),intent(out)::g_u,g_v,g_tv,g_q,g_rh,g_oz
     real(r_kind),dimension(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig),optional,intent(out)::g_ql,g_qi,g_qr,g_dbz,g_fed
     real(r_kind),dimension(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig),optional,intent(out)::g_qs,g_qg,g_qnr,g_w
 
     real(r_kind),dimension(grd_ens%lat2,grd_ens%lon2),intent(out):: g_ps
     real(r_kind),dimension(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig+1) ::g_prsi 
-    real(r_kind),dimension(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig) ::g_prsl ,g_tsen,g_q,g_delp
+    real(r_kind),dimension(grd_ens%lat2,grd_ens%lon2,grd_ens%nsig) ::g_prsl ,g_tsen, g_delp
 !
 ! Declare local parameters
     real(r_kind),parameter:: r0_01 = 0.01_r_kind
@@ -1521,7 +1638,7 @@ contains
          do n=1,n_ens
             do i=1,nelen
                sube%values(i)=sube%values(i) &
-                 +(en_perts(n,1,1)%valuesr4(i))*(en_perts(n,1,1)%valuesr4(i))
+                 +(en_perts(n,1,2)%valuesr4(i))*(en_perts(n,1,2)%valuesr4(i))
             end do
          end do
      
