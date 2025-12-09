@@ -306,6 +306,7 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
 !    If found, get the index (nc) from the convinfo for the specified type
      ntmatch =  0
      ncsave  =  0
+     nctemp  =  0
      do nc = 1, nconvtype
         if (trim(ioctype(nc)) == trim(obstype))then
            if (trim(ioctype(nc)) == 'uv'  .and. ictype(nc) == 236 .or. &
@@ -332,8 +333,9 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
         return
      else 
         nc = ncsave
-        write(6,*) ' READ_FL_HDOB: Processing FL HDOB data : ', ntmatch, nc, ioctype(nc), ictype(nc), ictype(nc)
+        write(6,*) ' READ_FL_HDOB: Processing FL HDOB data : ', ntmatch, nc, ioctype(nc), ictype(nc), itype
      end if
+     if (nctemp.ne.0) write(6,*) ' READ_FL_HDOB: Processing FL HDOB KUAS : ', nctemp, ioctype(nctemp), ictype(nctemp)
 
      ncount_ps=0;ncount_q=0;ncount_t=0;ncount_uv=0
 !    Setup thinning parameters
@@ -481,10 +483,18 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
 !                 3  both lat/lon abd GA/PS questionable
 
            call ufbint(lunin,obsqcm,2,1,nlv,qcmstr)
+           nc=ncsave
+           itype=ictype(nc)
+           ithin=ithin_conv(nc)
            if (trim(obsbul(2,1)) == 'KUAS') then
              obsqcm(1,1)=64 !Temp Fix for KUAS
              obsqcm(2,1)=64 !Temp Fix for KUAS
-             nc=nctemp ! XL get-around for KUAS
+             if (nctemp == 0) then
+                print *,"Warning, KUAS needs 138/238, not found in convinfo, use 136/236 instead"
+                nc=ncsave
+             else
+                nc=nctemp ! XL get-around for KUAS
+             endif
              itype=ictype(nc)
              ithin=ithin_conv(nc) !Updating thinning from 138/238
              if (ithin > 0) then
@@ -508,8 +518,6 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
                       enddo
                    endif
                 endif
-                write(6,*)'READ_FL_HDOB KUAS: ictype(nc),rmesh,pflag,nlevp,pmesh,nc ',&
-                   ioctype(nc),ictype(nc),rmesh,pflag,nlevp,pmesh,nc
              endif
            end if
            call upftbv(lunin,"QHDOP",obsqcm(1,1),mxib,ibit,nib)
