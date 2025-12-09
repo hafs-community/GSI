@@ -486,6 +486,29 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
              obsqcm(1,1)=64 !Temp Fix for KUAS
              obsqcm(2,1)=64 !Temp Fix for KUAS
              nc=nctemp ! XL get-around for KUAS
+             itype=ictype(nc)
+             ithin=ithin_conv(nc) !Updating thinning from 138/238
+             if (ithin > 0) then
+                rmesh   = rmesh_conv(nc)  ! horizontal mesh size
+                pmesh   = pmesh_conv(nc)  ! vertical mesh size
+                use_all = .false.
+                if(pmesh > zero) then
+                   pflag = 1
+                   nlevp = r1200/pmesh
+                else
+                   pflag = 0
+                   nlevp = nsig
+                endif
+                xmesh = rmesh
+                call make3grids(xmesh,nlevp)
+                if (.not.use_all) then
+                   allocate(presl_thin(nlevp))
+                   if (pflag == 1) then
+                      do k = 1,nlevp
+                         presl_thin(k) = (r1200-(k-1)*pmesh)*one_tenth
+                      enddo
+                   endif
+                endif
            end if
            call upftbv(lunin,"QHDOP",obsqcm(1,1),mxib,ibit,nib)
 
