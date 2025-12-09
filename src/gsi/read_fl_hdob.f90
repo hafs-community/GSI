@@ -332,8 +332,7 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
         return
      else 
         nc = ncsave
-        write(6,*) ' READ_FL_HDOB: Processing FL HDOB data : ', ntmatch, nc, ioctype(nc), ictype(nc), itype 
-        write(6,*) ' XL FL HDOB Temp: ', ntmatch, nctemp, ioctype(nctemp), ictype(nctemp), itype
+        write(6,*) ' READ_FL_HDOB: Processing FL HDOB data : ', ntmatch, nc, ioctype(nc), ictype(nc), ictype(nc)
      end if
 
      ncount_ps=0;ncount_q=0;ncount_t=0;ncount_uv=0
@@ -509,6 +508,9 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
                       enddo
                    endif
                 endif
+                write(6,*)'READ_FL_HDOB KUAS: ictype(nc),rmesh,pflag,nlevp,pmesh,nc ',&
+                   ioctype(nc),ictype(nc),rmesh,pflag,nlevp,pmesh,nc
+             endif
            end if
            call upftbv(lunin,"QHDOP",obsqcm(1,1),mxib,ibit,nib)
 
