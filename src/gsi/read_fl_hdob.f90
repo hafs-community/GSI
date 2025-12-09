@@ -116,7 +116,7 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
      integer(i_kind) :: nreal,nchanl
      integer(i_kind) :: idomsfc,isflg
      integer(i_kind) :: ithin,iout 
-     integer(i_kind) :: nc,ncsave
+     integer(i_kind) :: nc,ncsave,nctemp
      integer(i_kind) :: ntmatch,ntb
      integer(i_kind) :: nmsg   
      integer(i_kind) :: maxobs 
@@ -318,6 +318,13 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
                ithin   = ithin_conv(nc)  ! 0: no thinning 1: thinning
                itype   = ictype(nc)
            end if
+           if (trim(ioctype(nc)) == 'uv'  .and. ictype(nc) == 238 .or. &
+               trim(ioctype(nc)) == 't'   .and. ictype(nc) == 138 .or. &
+               trim(ioctype(nc)) == 'q'   .and. ictype(nc) == 138 .or. &
+               trim(ioctype(nc)) == 'ps'  .and. ictype(nc) == 138 ) then
+               ntmatch = ntmatch+1
+               nctemp  = nc
+           end if
         end if
      enddo
      if(ntmatch == 0)then  ! Return if not specified in convinfo 
@@ -326,6 +333,7 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
      else 
         nc = ncsave
         write(6,*) ' READ_FL_HDOB: Processing FL HDOB data : ', ntmatch, nc, ioctype(nc), ictype(nc), itype 
+        write(6,*) ' XL FL HDOB Temp: ', ntmatch, nctemp, ioctype(nctemp), ictype(nctemp), itype
      end if
 
      ncount_ps=0;ncount_q=0;ncount_t=0;ncount_uv=0
@@ -477,6 +485,7 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
            if (trim(obsbul(2,1)) == 'KUAS') then
              obsqcm(1,1)=64 !Temp Fix for KUAS
              obsqcm(2,1)=64 !Temp Fix for KUAS
+             nc=nctemp ! XL get-around for KUAS
            end if
            call upftbv(lunin,"QHDOP",obsqcm(1,1),mxib,ibit,nib)
 
