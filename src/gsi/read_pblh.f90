@@ -374,14 +374,13 @@
 ! OBLVL == SRC FHR <PEVN> <QEVN> <TEVN> <ZEVN> <WEVN> <CEVN> <SEVN>
 !       == SRC FHR POB PMO QOB    TOB    ZOB   UOB VOB ...  ! {P,Q,T,Z,W}EVN
 !     cnem='SRC FHR POB PMO QOB TOB ZOB UOB VOB'
-!     call ufbin3(lunin,olv,MXNM,MXRP,MXRP, nlevp,nlevo,cnem)
+!     call ufbevn(lunin,olv,MXNM,MXRP,MXRP, nlevp,nlevo,cnem)
 
 ! CEVN == CAPE CINH LI PBL TROP PWO
 !     cnem='CAPE CINH LI PBL TROP PWO'
       cnem='PBL'   ! for Caterina's files (ruc_raobs)
       clv=bmiss
-!      call ufbin3(lunin,clv,MXNM,MXRP,MXRP, nlevp,nlevc,cnem)
-      call ufbevn(lunin,clv,MXNM,MXRP,MXRP, nlevp,cnem)
+      call ufbevn(lunin,clv,MXNM,MXRP,MXRP, nlevp,nlevc,cnem)
 !     pblhob=clv(4,1,2)
       pblhob=clv(1,1,2)
       pblbak=clv(1,1,1)   ! model PBL; from Caterina's files
@@ -423,7 +422,7 @@
 
 ! SEVN == HOVI MXTM MITM TDO TOCC MXGS THI TCH CDBZ
 !     cnem='HOVI MXTM MITM TDO TOCC MXGS THI TCH CDBZ'
-!     call ufbin3(lunin,slv,MXNM,MXRP,MXRP, nlevp,nlevs,cnem)
+!     call ufbevn(lunin,slv,MXNM,MXRP,MXRP, nlevp,nlevs,cnem)
 
 !--Outputs
 
@@ -438,8 +437,7 @@
       write(*,'(1x,i6,1x,i3,1x,i4,1x,i3,$)') (int(hdr(i)),i=5,8) ! ELV,TYP,T29,ITP
 
       write(*,'(1x,2(2x,a,1x,i3),a,$)') '(olv=',nlevo,'nlevp=',nlevp,')'
-!      write(*,'(1x,2(2x,a,1x,i3),a,$)') '(clv=',nlevc,'nlevp=',nlevp,')'
-      write(*,'(1x,2(2x,a,1x,i3),a,$)') '(clv=',nlevp,'nlevp=',nlevp,')'
+      write(*,'(1x,2(2x,a,1x,i3),a,$)') '(clv=',nlevc,'nlevp=',nlevp,')'
 
       ndata=ndata+1
       nodata=nodata+1
