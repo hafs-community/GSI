@@ -30,14 +30,13 @@ else
 fi
 
 # Determine the machine
-if [[ -d /scratch1 ]]; then # Hera
-  export machine="Hera"
-elif [[ -d /mnt/lfs5 || -d /jetmon || -d /mnt/lfs5 ]]; then # Jet
-  export machine="Jet"
-elif [[ -d /discover ]]; then # NCCS Discover
-  export machine="Discover"
-elif [[ -d /gpfs/f5 ]]; then # GaeaC5
-  export machine="gaeac5"
+if [[ -d /scratch3 ]]; then # Hera or Ursa
+  mount=$(findmnt -n -o SOURCE /home)
+  if [[ ${mount} =~ "ursa" ]]; then
+    export machine="Ursa"
+  else
+    export machine="Hera"
+  fi
 elif [[ -d /gpfs/f6 ]]; then # GaeaC6
   export machine="gaeac6"
 elif [[ -d /work ]]; then # Orion or Hercules
@@ -53,6 +52,12 @@ elif [[ -d /lfs/h2 ]]; then # wcoss2 or acorn
   else
     export machine="wcoss2"
   fi
+elif [[ ! -z "${PW_CSP:+x}" ]]; then # noaacloud
+   case "${PW_CSP}" in
+      "aws" | "google" | "azure")
+        export machine="noaacloud"
+        ;;
+   esac
 fi
 echo "Running Regression Tests on '$machine'";
 
@@ -170,6 +175,18 @@ case $machine in
     #  After completion of regression tests, will remove the regression test subdirecories
     export clean=".false."
   ;;
+  noaacloud)
+
+    export noscrub="${noscrub:-/contrib/$USER/noscrub}"
+    export group="${group:-$USER}"
+    export queue="${queue:-batch}"
+    export ptmp="${ptmp:-/lustre/$USER/ptmp}"
+    export casesdir="${casesdir:-/lustre/GSI_RTs}"
+    export partition="${partition:-compute}"
+    export check_resource="no"
+    export accnt="${accnt:-}"
+    export clean=".false."
+  ;;
 
   *)
     echo "Regression tests are not setup on '$machine', ABORT!"
@@ -190,7 +207,13 @@ export savdir="$ptmp"
 export JCAP="62"
 
 # Case Study analysis dates
-export global_adate="2024022300"
+if [[ "${machine}" == "noaacloud" ]]; then
+  # due to unavailable unrestricted versions of obs data 
+  # for 2024022300 noaacloud uses its own global date
+  export global_adate="2021122100"
+else
+  export global_adate="2024022300"
+fi
 export rtma_adate="2020022420"
 export rrfs_enkf_adate="2023061012"
 export rrfs_3denvar_rdasens_adate="2023061012"

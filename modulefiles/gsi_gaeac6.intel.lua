@@ -22,5 +22,4 @@ setenv("CMAKE_Fortran_COMPILER","ftn")
 setenv("CMAKE_CXX_COMPILER","CC")
 pushenv("CRAYPE_LINK_TYPE","dynamic")
 
---unload("cray-libsci")
 whatis("Description: GSI environment on GaeaC6 with Intel Compilers")

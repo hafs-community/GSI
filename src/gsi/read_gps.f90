@@ -335,11 +335,7 @@ subroutine read_gps(nread,ndata,nodata,infile,lunout,obstype,twind, &
         if(ncnumgrp(ikx) > 0 )then                     ! cross validation on
            if(mod(nmrecs,ncnumgrp(ikx))== ncgroup(ikx)-1)usage=ncmiter(ikx)
         end if
-        
-! Deallocate the "lsw_flag" array if it is previously allocated
-        if (allocated(lsw_flag)) then
-           deallocate(lsw_flag)
-        end if  
+
 ! New LSW Check 
         if (allocated(lsw_flag)) deallocate(lsw_flag)
         allocate(array_lsw(levs),array_fraclsw(levs),array_impact(levs), &
