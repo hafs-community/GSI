@@ -19,16 +19,14 @@ local sfcio_ver=os.getenv("sfcio_ver") or "1.4.1"
 local nemsio_ver=os.getenv("nemsio_ver") or "2.5.4"
 local wrf_io_ver=os.getenv("wrf_io_ver") or "1.2.0"
 local ncio_ver=os.getenv("ncio_ver") or "1.1.2"
-local crtm_ver=os.getenv("crtm_ver") or "2.4.0.1"
+local crtm_ver=os.getenv("crtm_ver") or "2.4.0.2"
 local ncdiag_ver=os.getenv("ncdiag_ver") or "1.1.2"
---local ve_hafs_ver=os.getenv("ve_hafs_ver") or "2.1.1"
 
 load(pathJoin("PrgEnv-intel", PrgEnv_intel_ver))
 load(pathJoin("intel", intel_ver))
 load(pathJoin("craype", craype_ver))
 load(pathJoin("cray-mpich", cray_mpich_ver))
 load(pathJoin("cmake", cmake_ver))
---load(pathJoin("ve/hafs", ve_hafs_ver))
 
 load(pathJoin("prod_util", prod_util_ver))
 load(pathJoin("hdf5-D", hdf5_ver))
