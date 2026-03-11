@@ -144,6 +144,11 @@ subroutine setuprw(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsa
   use directDA_radaruse_mod, only: l_plt_diag_rw, l_chk_bmwth
   use directDA_radaruse_mod, only: l_use_rw_columntilt
 
+  ! added by Dan Wu for output ensemble spread at obs space
+  use hybrid_ensemble_parameters, only: u_perts, v_perts
+  use hybrid_ensemble_parameters, only: n_ens
+  use hybrid_ensemble_parameters, only: write_obs_sprd
+
 
   implicit none
 
@@ -197,6 +202,12 @@ subroutine setuprw(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsa
   real(r_kind),dimension(nele,nobs):: data
   real(r_single),allocatable,dimension(:,:)::rdiagbuf
 
+  real(r_kind), allocatable, dimension(:,:,:) :: mem_uperts, mem_vperts
+  real(r_kind), allocatable, dimension(:) :: uobs_perts, vobs_perts
+  real(r_kind) sp_norm,sig_norm_sq_inv
+  real(r_kind) rw_perts, suba_rw, rw_ensprd
+
+  integer(i_kind) nx, ny, nz, n
   integer(i_kind) i,nchar,nreal,k,j,k1,ii
   integer(i_kind) mm1,jj,k2,isli
   integer(i_kind) jsig,ikxx,nn,ibin,ioff,ioff0
@@ -572,6 +583,33 @@ subroutine setuprw(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsa
           hrdifsig,mype,nfldsig)
      call tintrp31(ges_v,vgesin,dlat,dlon,dpres,dtime,&
           hrdifsig,mype,nfldsig)
+
+   ! interpolate the ensemble perturbation to the obs data location
+     if (write_obs_sprd .and. (jiter == jiterstart)) then
+        allocate(uobs_perts(n_ens))
+        allocate(vobs_perts(n_ens))
+        uobs_perts=zero
+        vobs_perts=zero
+
+        nx = size(u_perts,1)
+        ny = size(u_perts,2)
+        nz = size(u_perts,3)
+        allocate(mem_uperts(nx,ny,nz))
+        allocate(mem_vperts(nx,ny,nz))
+        mem_uperts=zero
+        mem_vperts=zero
+        do n=1,n_ens
+           mem_uperts=u_perts(:,:,:,n)
+           mem_vperts=v_perts(:,:,:,n)
+           call tintrp31(mem_uperts,uobs_perts(n),dlat,dlon,dpres,dtime, &
+                3,mype,1)
+           call tintrp31(mem_vperts,vobs_perts(n),dlat,dlon,dpres,dtime, &
+                3,mype,1)
+        enddo
+        deallocate(mem_uperts)
+        deallocate(mem_vperts)
+     endif
+
      if(include_w) then
           call tintrp31(ges_w,wgesin,dlat,dlon,dpres,dtime,&
           hrdifsig,mype,nfldsig)
@@ -653,7 +691,20 @@ subroutine setuprw(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsa
        sinazm_costilt = sinazm*costilt
        !vTgesprofile= 5.40_r_kind*(exp((refgesprofile -43.1_r_kind)/17.5_r_kind)) 
 !      rwwind = (ugesin*cosazm+vgesin*sinazm)*costilt*factw
-  
+       if (write_obs_sprd .and. (jiter == jiterstart)) then
+          suba_rw = zero
+          sp_norm=one/real(n_ens, r_kind)
+          sig_norm_sq_inv = n_ens-one
+          do n=1,n_ens
+             rw_perts = cosazm_costilt*uobs_perts(n) + sinazm_costilt*vobs_perts(n)
+             suba_rw = suba_rw + rw_perts*rw_perts
+          enddo
+          rw_ensprd=sqrt(sp_norm*sig_norm_sq_inv*suba_rw)*factw
+          deallocate(uobs_perts)
+          deallocate(vobs_perts)
+       endif
+
+
        if ( .not. l_use_rw_columntilt ) then ! original code
          umaxmax=-huge(umaxmax)
          uminmin=huge(uminmin)
@@ -1344,6 +1395,10 @@ subroutine setuprw(obsLL,odiagLL,lunin,mype,bwork,awork,nele,nobs,is,conv_diagsa
            call nc_diag_metadata_to_single("Observation",data(irwob,i)  )
            call nc_diag_metadata_to_single("Obs_Minus_Forecast_adjusted",ddiff            )
            call nc_diag_metadata_to_single("Obs_Minus_Forecast_unadjusted",data(irwob,i),rwwind,'-')
+           ! output the ensemble spread to diag files
+          if (write_obs_sprd .and. (jiter == jiterstart)) then
+              call nc_diag_metadata_to_single("Ensemble_Spread",rw_ensprd)
+          endif           
 
            if (lobsdiagsave) then
               do jj=1,miter
