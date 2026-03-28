@@ -1474,13 +1474,15 @@ end subroutine read_satwnd
       enddo
 
 
-      do i=1,20; if(goes(i)==0) cycle
-      sattab(052,goes(i),1,1)=245; sattab(052,goes(i),1,2)=15 ! MSG TYPE 005-052 NESDIS SATWIND, GOES-16 IR(LW) (BUFR 
-      sattab(053,goes(i),4,1)=247; sattab(053,goes(i),4,2)=19 ! MSG TYPE 005-053 NESDIS SATWIND, GOES-16 WV-IMG/DL(BUFR 
-      sattab(054,goes(i),2,1)=251; sattab(054,goes(i),2,2)=17 ! MSG TYPE 005-054 NESDIS SATWIND, GOES-16 VIS (BUFR 
-      sattab(055,goes(i),3,1)=246; sattab(055,goes(i),3,2)=18 ! MSG TYPE 005-055 NESDIS SATWIND, GOES-16 WV-IMG/CT(BUFR 
-      sattab(056,goes(i),1,1)=240; sattab(056,goes(i),1,2)=16 ! MSG TYPE 005-056 NESDIS SATWIND, GOES-16 IR(SW) (BUFR 
-      enddo
+! --- JING comment out these to avoid using the conus high resolution GOES AMV in HAFS
+!      do i=1,20; if(goes(i)==0) cycle
+!      sattab(052,goes(i),1,1)=245; sattab(052,goes(i),1,2)=15 ! MSG TYPE 005-052 NESDIS SATWIND, GOES-16 IR(LW) (BUFR 
+!      sattab(053,goes(i),4,1)=247; sattab(053,goes(i),4,2)=19 ! MSG TYPE 005-053 NESDIS SATWIND, GOES-16 WV-IMG/DL(BUFR 
+!      sattab(054,goes(i),2,1)=251; sattab(054,goes(i),2,2)=17 ! MSG TYPE 005-054 NESDIS SATWIND, GOES-16 VIS (BUFR 
+!      sattab(055,goes(i),3,1)=246; sattab(055,goes(i),3,2)=18 ! MSG TYPE 005-055 NESDIS SATWIND, GOES-16 WV-IMG/CT(BUFR 
+!      sattab(056,goes(i),1,1)=240; sattab(056,goes(i),1,2)=16 ! MSG TYPE 005-056 NESDIS SATWIND, GOES-16 IR(SW) (BUFR 
+!      enddo
+! --- END of skip conus high resolution GOES AMV
 
       do i=1,20; if(meto(i)==0) cycle
       sattab(061,meto(i),1,1)=253; sattab(061,meto(i),1,2)=00 ! MSG TYPE 005-061 EUMETSAT SATWIND, METEOSAT IR CHAN 
